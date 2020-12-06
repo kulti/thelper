@@ -44,7 +44,7 @@ It adds more consistency into your code. When common variables have the same nam
 ## Installation
 
 ```
-go install github.com/kulti/thelper
+go get github.com/kulti/thelper/cmd/thelper
 ```
 
 ## Usage
