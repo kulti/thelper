@@ -45,10 +45,14 @@ func (m enabledChecksValue) String() string {
 }
 
 func (m enabledChecksValue) Set(s string) error {
+	ss := strings.FieldsFunc(s, func(c rune) bool { return c == ',' })
+	if len(ss) == 0 {
+		return nil
+	}
+
 	for k := range m {
 		delete(m, k)
 	}
-	ss := strings.FieldsFunc(s, func(c rune) bool { return c == ',' })
 	for _, v := range ss {
 		switch v {
 		case checkTBegin, checkTFirst, checkTName, checkBBegin, checkBFirst, checkBName:

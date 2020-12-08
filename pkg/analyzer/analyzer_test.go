@@ -17,7 +17,24 @@ func TestAllChecks(t *testing.T) {
 
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	testdata := analysistest.TestData()
-	analysistest.Run(t, testdata, analyzer.NewAnalyzer(), "t", "b")
+
+	t.Run("without check flag", func(t *testing.T) {
+		t.Parallel()
+
+		a := analyzer.NewAnalyzer()
+		analysistest.Run(t, testdata, a, "t", "b")
+	})
+
+	t.Run("empty checks flag", func(t *testing.T) {
+		t.Parallel()
+
+		a := analyzer.NewAnalyzer()
+		err := a.Flags.Set("checks", "")
+		if err != nil {
+			t.Fatalf("failed to set checks empty value: %s", err.Error())
+		}
+		analysistest.Run(t, testdata, a, "t", "b")
+	})
 }
 
 //go:generate go run github.com/kulti/thelper/scripts/generator --name t --check begin --path testdata/src
