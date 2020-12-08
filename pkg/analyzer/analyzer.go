@@ -48,7 +48,7 @@ func (m enabledChecksValue) Set(s string) error {
 	for k := range m {
 		delete(m, k)
 	}
-	ss := strings.Split(s, ",")
+	ss := strings.FieldsFunc(s, func(c rune) bool { return c == ',' })
 	for _, v := range ss {
 		switch v {
 		case checkTBegin, checkTFirst, checkTName, checkBBegin, checkBFirst, checkBName:
