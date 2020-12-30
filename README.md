@@ -37,9 +37,11 @@ func testGood(t *testing.T) {
 
 Why not? If you place it as the first call you unlikely add some assertion before.
 
-### Why I need to name *testing.T as t? Why it should be first?
+### Why I need to name *testing.T as t? Why it should be the first?
 
 It adds more consistency into your code. When common variables have the same name and placed into the same position it simpler to understand and read.
+
+Note that it is not a strong restriction to be the first. It can be the second to be compatible with `context.Context` param linting.
 
 ## Installation
 
@@ -106,7 +108,7 @@ func checkSmth(t *testing.T) {
 }
 ```
 
-### With t as not first param
+### With t as not the first param
 
 ```
 // Bad

@@ -2,7 +2,10 @@
 
 package t
 
-import "testing"
+import (
+	"context"
+	"testing"
+)
 
 func nonTestHelper(t int) {}
 
@@ -32,7 +35,15 @@ func helperWithHelperAfterOtherSelectionCall(t *testing.T) { // want "test helpe
 	t.Helper()
 }
 
-func helperWithNotFirst(s string, t *testing.T, i int) { // want "parameter \\*testing.T should be the first"
+func helperParamNotFirst(s string, i int, t *testing.T) { // want "parameter \\*testing.T should be the first or after context.Context"
+	t.Helper()
+}
+
+func helperParamSecondWithoutContext(s string, t *testing.T, i int) { // want "parameter \\*testing.T should be the first or after context.Context"
+	t.Helper()
+}
+
+func helperParamSecondWithContext(ctx context.Context, t *testing.T) {
 	t.Helper()
 }
 
