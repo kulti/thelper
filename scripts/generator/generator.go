@@ -51,6 +51,11 @@ func helperWithIncorrectName(o *testing.{{.UName}}) { {{if or (eq .Check "") (eq
 	o.Helper()
 }
 
+func helperWithAnonymousHelper({{.Name}} *testing.{{.UName}}) {
+	{{.Name}}.Helper()
+	func({{.Name}} *testing.{{.UName}}) {}({{.Name}}) {{if or (eq .Check "") (eq .Check "begin")}}// want "test helper function should start from {{.Name}}.Helper()"{{end}}
+}
+
 func f() {}
 `
 
