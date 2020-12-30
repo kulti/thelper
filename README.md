@@ -49,6 +49,12 @@ go get github.com/kulti/thelper/cmd/thelper
 
 ## Usage
 
+### golangci-lint
+
+[golangci-lint](https://golangci-lint.run/) supports thelper, so you can enable this linter and use it.
+
+### Shell
+
 Check everything:
 ```
 thelper ./...
@@ -56,7 +62,9 @@ thelper ./...
 
 ### Enable only required checks
 
-You can run thelper with only required checks. E.g. the following command checks that `*testing.T` is the first param and `*testing.B` has name `b`:
+If you run via golangci-lint look at [.golangci.example.yml](https://golangci-lint.run/usage/configuration/#config-file) for an example of the configuration.
+
+Otherwise you can run thelper with `--checks` command line argument. E.g. the following command checks that `*testing.T` is the first param and `*testing.B` has name `b`:
 ```
 thelper --checks=t_first,b_name ./...
 ```
