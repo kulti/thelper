@@ -40,4 +40,9 @@ func helperWithIncorrectName(o *testing.B) { // want "parameter \\*testing.B sho
 	o.Helper()
 }
 
+func helperWithAnonymousHelper(b *testing.B) {
+	b.Helper()
+	func(b *testing.B) {}(b) 
+}
+
 func f() {}
