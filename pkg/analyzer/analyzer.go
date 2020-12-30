@@ -117,6 +117,12 @@ func (t thelper) run(pass *analysis.Pass) (interface{}, error) {
 		return nil, nil
 	}
 
+	var ctxType types.Type
+	ctxObj := analysisutil.ObjectOf(pass, "context", "Context")
+	if ctxObj != nil {
+		ctxType = ctxObj.Type()
+	}
+
 	tHelper, _, _ := types.LookupFieldOrMethod(tObj.Type(), true, tObj.Pkg(), "Helper")
 	if tHelper == nil {
 		return nil, nil
@@ -132,6 +138,7 @@ func (t thelper) run(pass *analysis.Pass) (interface{}, error) {
 		varName:    "t",
 		tbHelper:   tHelper,
 		tbType:     types.NewPointer(tObj.Type()),
+		ctxType:    ctxType,
 		checkBegin: t.enabledChecks.Enabled(checkTBegin),
 		checkFirst: t.enabledChecks.Enabled(checkTFirst),
 		checkName:  t.enabledChecks.Enabled(checkTName),
@@ -142,6 +149,7 @@ func (t thelper) run(pass *analysis.Pass) (interface{}, error) {
 		varName:    "b",
 		tbHelper:   bHelper,
 		tbType:     types.NewPointer(bObj.Type()),
+		ctxType:    ctxType,
 		checkBegin: t.enabledChecks.Enabled(checkBBegin),
 		checkFirst: t.enabledChecks.Enabled(checkBFirst),
 		checkName:  t.enabledChecks.Enabled(checkBName),
@@ -179,7 +187,8 @@ type checkFuncOpts struct {
 	skipPrefix string
 	varName    string
 	tbHelper   types.Object
-	tbType     *types.Pointer
+	tbType     types.Type
+	ctxType    types.Type
 	checkBegin bool
 	checkFirst bool
 	checkName  bool
@@ -204,7 +213,15 @@ func checkFunc(pass *analysis.Pass, funcDecl funcDecl, opts checkFuncOpts) {
 
 	if opts.checkFirst {
 		if pos != 0 {
-			pass.Reportf(funcDecl.Pos, "parameter %s should be the first", opts.tbType)
+			checkFirstPassed := false
+			if pos == 1 && opts.ctxType != nil {
+				_, pos, ok := searchFuncParam(pass, funcDecl, opts.ctxType)
+				checkFirstPassed = ok && (pos == 0)
+			}
+
+			if !checkFirstPassed {
+				pass.Reportf(funcDecl.Pos, "parameter %s should be the first or after context.Context", opts.tbType)
+			}
 		}
 	}
 

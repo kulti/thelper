@@ -2,7 +2,10 @@
 
 package b
 
-import "testing"
+import (
+	"context"
+	"testing"
+)
 
 func nonTestHelper(b int) {}
 
@@ -32,7 +35,15 @@ func helperWithHelperAfterOtherSelectionCall(b *testing.B) { // want "test helpe
 	b.Helper()
 }
 
-func helperWithNotFirst(s string, b *testing.B, i int) { 
+func helperParamNotFirst(s string, i int, b *testing.B) { 
+	b.Helper()
+}
+
+func helperParamSecondWithoutContext(s string, b *testing.B, i int) { 
+	b.Helper()
+}
+
+func helperParamSecondWithContext(ctx context.Context, b *testing.B) {
 	b.Helper()
 }
 
