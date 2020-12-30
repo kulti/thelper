@@ -1,0 +1,20 @@
+project_name: thelper
+
+release:
+  github:
+    owner: kulti
+    name: thelper
+
+builds:
+  - skip: true
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+    - '^docs:'
+    - '^test:'
+    - '^chore:'
+    - 'README'
+    - Merge pull request
+    - Merge branch
