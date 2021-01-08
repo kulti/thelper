@@ -107,52 +107,20 @@ func NewAnalyzer() *analysis.Analyzer {
 }
 
 func (t thelper) run(pass *analysis.Pass) (interface{}, error) {
-	tObj := analysisutil.ObjectOf(pass, "testing", "T")
-	if tObj == nil {
-		return nil, nil
-	}
-
-	bObj := analysisutil.ObjectOf(pass, "testing", "B")
-	if bObj == nil {
-		return nil, nil
-	}
-
 	var ctxType types.Type
 	ctxObj := analysisutil.ObjectOf(pass, "context", "Context")
 	if ctxObj != nil {
 		ctxType = ctxObj.Type()
 	}
 
-	tHelper, _, _ := types.LookupFieldOrMethod(tObj.Type(), true, tObj.Pkg(), "Helper")
-	if tHelper == nil {
+	tCheckOpts, ok := t.buildTestCheckFuncOpts(pass, ctxType)
+	if !ok {
 		return nil, nil
 	}
 
-	bHelper, _, _ := types.LookupFieldOrMethod(bObj.Type(), true, bObj.Pkg(), "Helper")
-	if bHelper == nil {
+	bCheckOpts, ok := t.buildBenchmarkCheckFuncOpts(pass, ctxType)
+	if !ok {
 		return nil, nil
-	}
-
-	tCheckOpts := checkFuncOpts{
-		skipPrefix: "Test",
-		varName:    "t",
-		tbHelper:   tHelper,
-		tbType:     types.NewPointer(tObj.Type()),
-		ctxType:    ctxType,
-		checkBegin: t.enabledChecks.Enabled(checkTBegin),
-		checkFirst: t.enabledChecks.Enabled(checkTFirst),
-		checkName:  t.enabledChecks.Enabled(checkTName),
-	}
-
-	bCheckOpts := checkFuncOpts{
-		skipPrefix: "Benchmark",
-		varName:    "b",
-		tbHelper:   bHelper,
-		tbType:     types.NewPointer(bObj.Type()),
-		ctxType:    ctxType,
-		checkBegin: t.enabledChecks.Enabled(checkBBegin),
-		checkFirst: t.enabledChecks.Enabled(checkBFirst),
-		checkName:  t.enabledChecks.Enabled(checkBName),
 	}
 
 	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
@@ -192,6 +160,52 @@ type checkFuncOpts struct {
 	checkBegin bool
 	checkFirst bool
 	checkName  bool
+}
+
+func (t thelper) buildTestCheckFuncOpts(pass *analysis.Pass, ctxType types.Type) (checkFuncOpts, bool) {
+	tObj := analysisutil.ObjectOf(pass, "testing", "T")
+	if tObj == nil {
+		return checkFuncOpts{}, false
+	}
+
+	tHelper, _, _ := types.LookupFieldOrMethod(tObj.Type(), true, tObj.Pkg(), "Helper")
+	if tHelper == nil {
+		return checkFuncOpts{}, false
+	}
+
+	return checkFuncOpts{
+		skipPrefix: "Test",
+		varName:    "t",
+		tbHelper:   tHelper,
+		tbType:     types.NewPointer(tObj.Type()),
+		ctxType:    ctxType,
+		checkBegin: t.enabledChecks.Enabled(checkTBegin),
+		checkFirst: t.enabledChecks.Enabled(checkTFirst),
+		checkName:  t.enabledChecks.Enabled(checkTName),
+	}, true
+}
+
+func (t thelper) buildBenchmarkCheckFuncOpts(pass *analysis.Pass, ctxType types.Type) (checkFuncOpts, bool) {
+	bObj := analysisutil.ObjectOf(pass, "testing", "B")
+	if bObj == nil {
+		return checkFuncOpts{}, false
+	}
+
+	bHelper, _, _ := types.LookupFieldOrMethod(bObj.Type(), true, bObj.Pkg(), "Helper")
+	if bHelper == nil {
+		return checkFuncOpts{}, false
+	}
+
+	return checkFuncOpts{
+		skipPrefix: "Benchmark",
+		varName:    "b",
+		tbHelper:   bHelper,
+		tbType:     types.NewPointer(bObj.Type()),
+		ctxType:    ctxType,
+		checkBegin: t.enabledChecks.Enabled(checkBBegin),
+		checkFirst: t.enabledChecks.Enabled(checkBFirst),
+		checkName:  t.enabledChecks.Enabled(checkBName),
+	}, true
 }
 
 type funcDecl struct {
