@@ -100,7 +100,7 @@ func NewAnalyzer() *analysis.Analyzer {
 		},
 	}
 
-	a.Flags.Init("nlreturn", flag.ExitOnError)
+	a.Flags.Init("thelper", flag.ExitOnError)
 	a.Flags.Var(&thelper.enabledChecks, "checks", checksDoc)
 
 	return a
