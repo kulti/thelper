@@ -15,6 +15,7 @@ changelog:
     - '^docs:'
     - '^test:'
     - '^chore:'
+    - '^refactor:'
     - 'README'
     - Merge pull request
     - Merge branch
