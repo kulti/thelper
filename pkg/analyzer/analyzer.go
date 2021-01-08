@@ -123,6 +123,7 @@ func (t thelper) run(pass *analysis.Pass) (interface{}, error) {
 		return nil, nil
 	}
 
+	var reports reports
 	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 	nodeFilter := []ast.Node{
 		(*ast.FuncDecl)(nil),
@@ -145,9 +146,12 @@ func (t thelper) run(pass *analysis.Pass) (interface{}, error) {
 			return
 		}
 
-		checkFunc(pass, fd, tCheckOpts)
-		checkFunc(pass, fd, bCheckOpts)
+		checkFunc(pass, &reports, fd, tCheckOpts)
+		checkFunc(pass, &reports, fd, bCheckOpts)
 	})
+
+	reports.Flush(pass)
+
 	return nil, nil
 }
 
@@ -215,7 +219,7 @@ type funcDecl struct {
 	Body *ast.BlockStmt
 }
 
-func checkFunc(pass *analysis.Pass, funcDecl funcDecl, opts checkFuncOpts) {
+func checkFunc(pass *analysis.Pass, reports *reports, funcDecl funcDecl, opts checkFuncOpts) {
 	if strings.HasPrefix(funcDecl.Name.Name, opts.skipPrefix) {
 		return
 	}
@@ -234,20 +238,20 @@ func checkFunc(pass *analysis.Pass, funcDecl funcDecl, opts checkFuncOpts) {
 			}
 
 			if !checkFirstPassed {
-				pass.Reportf(funcDecl.Pos, "parameter %s should be the first or after context.Context", opts.tbType)
+				reports.Reportf(funcDecl.Pos, "parameter %s should be the first or after context.Context", opts.tbType)
 			}
 		}
 	}
 
 	if opts.checkName {
 		if len(p.Names) > 0 && p.Names[0].Name != opts.varName {
-			pass.Reportf(funcDecl.Pos, "parameter %s should have name %s", opts.tbType, opts.varName)
+			reports.Reportf(funcDecl.Pos, "parameter %s should have name %s", opts.tbType, opts.varName)
 		}
 	}
 
 	if opts.checkBegin {
 		if len(funcDecl.Body.List) == 0 || !isTHelperCall(pass, funcDecl.Body.List[0], opts.tbHelper) {
-			pass.Reportf(funcDecl.Pos, "test helper function should start from %s.Helper()", opts.varName)
+			reports.Reportf(funcDecl.Pos, "test helper function should start from %s.Helper()", opts.varName)
 		}
 	}
 }
