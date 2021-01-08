@@ -8,6 +8,7 @@ import (
 
 type reports struct {
 	reports []report
+	filter  map[token.Pos]struct{}
 }
 
 type report struct {
@@ -24,8 +25,20 @@ func (rr *reports) Reportf(pos token.Pos, format string, args ...interface{}) {
 	})
 }
 
+func (rr *reports) Filter(pos token.Pos) {
+	if pos.IsValid() {
+		if rr.filter == nil {
+			rr.filter = make(map[token.Pos]struct{})
+		}
+		rr.filter[pos] = struct{}{}
+	}
+}
+
 func (rr reports) Flush(pass *analysis.Pass) {
 	for _, r := range rr.reports {
+		if _, ok := rr.filter[r.pos]; ok {
+			continue
+		}
 		pass.Reportf(r.pos, r.format, r.args...)
 	}
 }

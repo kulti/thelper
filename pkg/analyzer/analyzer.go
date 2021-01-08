@@ -128,6 +128,7 @@ func (t thelper) run(pass *analysis.Pass) (interface{}, error) {
 	nodeFilter := []ast.Node{
 		(*ast.FuncDecl)(nil),
 		(*ast.FuncLit)(nil),
+		(*ast.CallExpr)(nil),
 	}
 	inspect.Preorder(nodeFilter, func(node ast.Node) {
 		var fd funcDecl
@@ -138,10 +139,14 @@ func (t thelper) run(pass *analysis.Pass) (interface{}, error) {
 			fd.Body = n.Body
 			fd.Name = ast.NewIdent("")
 		case *ast.FuncDecl:
-			fd.Pos = n.Pos()
+			fd.Pos = n.Name.NamePos
 			fd.Type = n.Type
 			fd.Body = n.Body
 			fd.Name = n.Name
+		case *ast.CallExpr:
+			reports.Filter(subtestPos(pass, n, tCheckOpts.tbRun))
+			reports.Filter(subtestPos(pass, n, bCheckOpts.tbRun))
+			return
 		default:
 			return
 		}
@@ -159,6 +164,7 @@ type checkFuncOpts struct {
 	skipPrefix string
 	varName    string
 	tbHelper   types.Object
+	tbRun      types.Object
 	tbType     types.Type
 	ctxType    types.Type
 	checkBegin bool
@@ -177,10 +183,16 @@ func (t thelper) buildTestCheckFuncOpts(pass *analysis.Pass, ctxType types.Type)
 		return checkFuncOpts{}, false
 	}
 
+	tRun, _, _ := types.LookupFieldOrMethod(tObj.Type(), true, tObj.Pkg(), "Run")
+	if tRun == nil {
+		return checkFuncOpts{}, false
+	}
+
 	return checkFuncOpts{
 		skipPrefix: "Test",
 		varName:    "t",
 		tbHelper:   tHelper,
+		tbRun:      tRun,
 		tbType:     types.NewPointer(tObj.Type()),
 		ctxType:    ctxType,
 		checkBegin: t.enabledChecks.Enabled(checkTBegin),
@@ -200,10 +212,16 @@ func (t thelper) buildBenchmarkCheckFuncOpts(pass *analysis.Pass, ctxType types.
 		return checkFuncOpts{}, false
 	}
 
+	bRun, _, _ := types.LookupFieldOrMethod(bObj.Type(), true, bObj.Pkg(), "Run")
+	if bRun == nil {
+		return checkFuncOpts{}, false
+	}
+
 	return checkFuncOpts{
 		skipPrefix: "Benchmark",
 		varName:    "b",
 		tbHelper:   bHelper,
+		tbRun:      bRun,
 		tbType:     types.NewPointer(bObj.Type()),
 		ctxType:    ctxType,
 		checkBegin: t.enabledChecks.Enabled(checkBBegin),
@@ -286,10 +304,46 @@ func isTHelperCall(pass *analysis.Pass, s ast.Stmt, tHelper types.Object) bool {
 		return false
 	}
 
+	return isSelectorCall(pass, selExpr, tHelper)
+}
+
+func subtestPos(pass *analysis.Pass, e *ast.CallExpr, tbRun types.Object) token.Pos {
+	selExpr, ok := e.Fun.(*ast.SelectorExpr)
+	if !ok {
+		return token.NoPos
+	}
+
+	if !isSelectorCall(pass, selExpr, tbRun) {
+		return token.NoPos
+	}
+
+	if len(e.Args) != 2 {
+		return token.NoPos
+	}
+
+	anonFunLit, ok := e.Args[1].(*ast.FuncLit)
+	if ok {
+		return anonFunLit.Pos()
+	}
+
+	funIdent, ok := e.Args[1].(*ast.Ident)
+	if !ok {
+		return token.NoPos
+	}
+
+	funDef, ok := pass.TypesInfo.Uses[funIdent]
+	if !ok {
+		return token.NoPos
+	}
+
+	return funDef.Pos()
+}
+
+func isSelectorCall(pass *analysis.Pass, selExpr *ast.SelectorExpr, callObj types.Object) bool {
 	sel, ok := pass.TypesInfo.Selections[selExpr]
 	if !ok {
 		return false
 	}
 
-	return sel.Obj() == tHelper
+	return sel.Obj() == callObj
 }
