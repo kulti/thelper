@@ -20,54 +20,54 @@ import (
 
 func nonTestHelper({{.Name}} int) {}
 
-func helperWithoutHelper({{.Name}} *testing.{{.UName}}) {} {{if or (eq .Check "") (eq .Check "begin")}}// want "test helper function should start from {{.Name}}.Helper()"{{end}}
+func helperWithoutHelper({{.Name}} {{.Testing}}.{{.UName}}) {} {{if or (eq .Check "") (eq .Check "begin")}}// want "test helper function should start from {{.Name}}.Helper()"{{end}}
 
-func helperWithHelper({{.Name}} *testing.{{.UName}}) {
+func helperWithHelper({{.Name}} {{.Testing}}.{{.UName}}) {
 	{{.Name}}.Helper()
 }
 
-func helperWithEmptyStringBeforeHelper({{.Name}} *testing.{{.UName}}) {
+func helperWithEmptyStringBeforeHelper({{.Name}} {{.Testing}}.{{.UName}}) {
 
 	{{.Name}}.Helper()
 }
 
-func helperWithHelperAfterAssignment({{.Name}} *testing.{{.UName}}) { {{if or (eq .Check "") (eq .Check "begin")}}// want "test helper function should start from {{.Name}}.Helper()"{{end}}
+func helperWithHelperAfterAssignment({{.Name}} {{.Testing}}.{{.UName}}) { {{if or (eq .Check "") (eq .Check "begin")}}// want "test helper function should start from {{.Name}}.Helper()"{{end}}
 	_ = 0
 	{{.Name}}.Helper()
 }
 
-func helperWithHelperAfterOtherCall({{.Name}} *testing.{{.UName}}) { {{if or (eq .Check "") (eq .Check "begin")}}// want "test helper function should start from {{.Name}}.Helper()"{{end}}
+func helperWithHelperAfterOtherCall({{.Name}} {{.Testing}}.{{.UName}}) { {{if or (eq .Check "") (eq .Check "begin")}}// want "test helper function should start from {{.Name}}.Helper()"{{end}}
 	f()
 	{{.Name}}.Helper()
 }
 
-func helperWithHelperAfterOtherSelectionCall({{.Name}} *testing.{{.UName}}) { {{if or (eq .Check "") (eq .Check "begin")}}// want "test helper function should start from {{.Name}}.Helper()"{{end}}
+func helperWithHelperAfterOtherSelectionCall({{.Name}} {{.Testing}}.{{.UName}}) { {{if or (eq .Check "") (eq .Check "begin")}}// want "test helper function should start from {{.Name}}.Helper()"{{end}}
 	{{.Name}}.Fail()
 	{{.Name}}.Helper()
 }
 
-func helperParamNotFirst(s string, i int, {{.Name}} *testing.{{.UName}}) { {{if or (eq .Check "") (eq .Check "first")}}// want "parameter \\*testing.{{.UName}} should be the first or after context.Context"{{end}}
+func helperParamNotFirst(s string, i int, {{.Name}} {{.Testing}}.{{.UName}}) { {{if or (eq .Check "") (eq .Check "first")}}// want "parameter {{.TestingComment}}.{{.UName}} should be the first or after context.Context"{{end}}
 	{{.Name}}.Helper()
 }
 
-func helperParamSecondWithoutContext(s string, {{.Name}} *testing.{{.UName}}, i int) { {{if or (eq .Check "") (eq .Check "first")}}// want "parameter \\*testing.{{.UName}} should be the first or after context.Context"{{end}}
+func helperParamSecondWithoutContext(s string, {{.Name}} {{.Testing}}.{{.UName}}, i int) { {{if or (eq .Check "") (eq .Check "first")}}// want "parameter {{.TestingComment}}.{{.UName}} should be the first or after context.Context"{{end}}
 	{{.Name}}.Helper()
 }
 
-func helperParamSecondWithContext(ctx context.Context, {{.Name}} *testing.{{.UName}}) {
+func helperParamSecondWithContext(ctx context.Context, {{.Name}} {{.Testing}}.{{.UName}}) {
 	{{.Name}}.Helper()
 }
 
-func helperWithIncorrectName(o *testing.{{.UName}}) { {{if or (eq .Check "") (eq .Check "name")}}// want "parameter \\*testing.{{.UName}} should have name {{.Name}}"{{end}}
+func helperWithIncorrectName(o {{.Testing}}.{{.UName}}) { {{if or (eq .Check "") (eq .Check "name")}}// want "parameter {{.TestingComment}}.{{.UName}} should have name {{.Name}}"{{end}}
 	o.Helper()
 }
 
-func helperWithAnonymousHelper({{.Name}} *testing.{{.UName}}) {
+func helperWithAnonymousHelper({{.Name}} {{.Testing}}.{{.UName}}) {
 	{{.Name}}.Helper()
-	func({{.Name}} *testing.{{.UName}}) {}({{.Name}}) {{if or (eq .Check "") (eq .Check "begin")}}// want "test helper function should start from {{.Name}}.Helper()"{{end}}
+	func({{.Name}} {{.Testing}}.{{.UName}}) {}({{.Name}}) {{if or (eq .Check "") (eq .Check "begin")}}// want "test helper function should start from {{.Name}}.Helper()"{{end}}
 }
 
-func helperWithNoName(_ *testing.{{.UName}}) {
+func helperWithNoName(_ {{.Testing}}.{{.UName}}) {
 }
 
 func f() {}
@@ -75,10 +75,12 @@ func f() {}
 
 func main() {
 	var name, path, check string
+	var isInterface bool
 
 	flag.StringVar(&name, "name", "", "")
 	flag.StringVar(&path, "path", "", "")
 	flag.StringVar(&check, "check", "", "")
+	flag.BoolVar(&isInterface, "interface", false, "")
 	flag.Parse()
 
 	if name == "" || path == "" {
@@ -105,12 +107,20 @@ func main() {
 		log.Fatalf("failed to create file %q: %s", filePath, err.Error())
 	}
 
+	testingStr := "*testing"
+	testingComment := `\\*testing`
+	if isInterface {
+		testingStr = "testing"
+		testingComment = "testing"
+	}
 	data := struct {
-		Name  string
-		UName string
-		Check string
+		Name           string
+		UName          string
+		Check          string
+		Testing        string
+		TestingComment string
 	}{
-		name, strings.ToUpper(name), check,
+		name, strings.ToUpper(name), check, testingStr, testingComment,
 	}
 	if err := tmpl.Execute(f, &data); err != nil {
 		log.Fatalf("failed to execute template: %s", err.Error())

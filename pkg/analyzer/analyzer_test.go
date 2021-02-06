@@ -11,6 +11,7 @@ import (
 
 //go:generate go run github.com/kulti/thelper/scripts/generator --name t --path testdata/src
 //go:generate go run github.com/kulti/thelper/scripts/generator --name b --path testdata/src
+//go:generate go run github.com/kulti/thelper/scripts/generator --name tb --interface --path testdata/src
 
 func TestAllChecks(t *testing.T) {
 	t.Parallel()
@@ -22,7 +23,7 @@ func TestAllChecks(t *testing.T) {
 		t.Parallel()
 
 		a := analyzer.NewAnalyzer()
-		analysistest.Run(t, testdata, a, "t", "b")
+		analysistest.Run(t, testdata, a, "t", "b", "tb")
 	})
 
 	t.Run("empty checks flag", func(t *testing.T) {
@@ -33,21 +34,24 @@ func TestAllChecks(t *testing.T) {
 		if err != nil {
 			t.Fatalf("failed to set checks empty value: %s", err.Error())
 		}
-		analysistest.Run(t, testdata, a, "t", "b")
+		analysistest.Run(t, testdata, a, "t", "b", "tb")
 	})
 }
 
 //go:generate go run github.com/kulti/thelper/scripts/generator --name t --check begin --path testdata/src
 //go:generate go run github.com/kulti/thelper/scripts/generator --name b --check begin --path testdata/src
+//go:generate go run github.com/kulti/thelper/scripts/generator --name tb --interface --check begin --path testdata/src
 //go:generate go run github.com/kulti/thelper/scripts/generator --name t --check first --path testdata/src
 //go:generate go run github.com/kulti/thelper/scripts/generator --name b --check first --path testdata/src
+//go:generate go run github.com/kulti/thelper/scripts/generator --name tb --interface --check first --path testdata/src
 //go:generate go run github.com/kulti/thelper/scripts/generator --name t --check name --path testdata/src
 //go:generate go run github.com/kulti/thelper/scripts/generator --name b --check name --path testdata/src
+//go:generate go run github.com/kulti/thelper/scripts/generator --name tb --interface --check name --path testdata/src
 
 func TestSingleCheck(t *testing.T) {
 	t.Parallel()
 
-	checks := []string{"t_begin", "t_first", "t_name", "b_begin", "b_first", "b_name"}
+	checks := []string{"t_begin", "t_first", "t_name", "b_begin", "b_first", "b_name", "tb_begin", "tb_first", "tb_name"}
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	testdata := analysistest.TestData()
 

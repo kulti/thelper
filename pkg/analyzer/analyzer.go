@@ -24,7 +24,8 @@ Available checks
 ` + checkTFirst + ` - check *testing.T is first param of helper function
 ` + checkTName + `  - check *testing.T param has t name
 
-Also available similar checks for benchmark helpers: ` +
+Also available similar checks for benchmark and TB helpers: ` +
+	checkBBegin + `, ` + checkBFirst + `, ` + checkBName +
 	checkBBegin + `, ` + checkBFirst + `, ` + checkBName + `
 
 `
@@ -56,7 +57,9 @@ func (m enabledChecksValue) Set(s string) error {
 	}
 	for _, v := range ss {
 		switch v {
-		case checkTBegin, checkTFirst, checkTName, checkBBegin, checkBFirst, checkBName:
+		case checkTBegin, checkTFirst, checkTName,
+			checkBBegin, checkBFirst, checkBName,
+			checkTBBegin, checkTBFirst, checkTBName:
 			m[v] = struct{}{}
 		default:
 			return fmt.Errorf("unknown check name %q (see help for full list)", v)
@@ -66,12 +69,15 @@ func (m enabledChecksValue) Set(s string) error {
 }
 
 const (
-	checkTBegin = "t_begin"
-	checkTFirst = "t_first"
-	checkTName  = "t_name"
-	checkBBegin = "b_begin"
-	checkBFirst = "b_first"
-	checkBName  = "b_name"
+	checkTBegin  = "t_begin"
+	checkTFirst  = "t_first"
+	checkTName   = "t_name"
+	checkBBegin  = "b_begin"
+	checkBFirst  = "b_first"
+	checkBName   = "b_name"
+	checkTBBegin = "tb_begin"
+	checkTBFirst = "tb_first"
+	checkTBName  = "tb_name"
 )
 
 type thelper struct {
@@ -83,12 +89,15 @@ type thelper struct {
 func NewAnalyzer() *analysis.Analyzer {
 	thelper := thelper{}
 	thelper.enabledChecks = enabledChecksValue{
-		checkTBegin: struct{}{},
-		checkTFirst: struct{}{},
-		checkTName:  struct{}{},
-		checkBBegin: struct{}{},
-		checkBFirst: struct{}{},
-		checkBName:  struct{}{},
+		checkTBegin:  struct{}{},
+		checkTFirst:  struct{}{},
+		checkTName:   struct{}{},
+		checkBBegin:  struct{}{},
+		checkBFirst:  struct{}{},
+		checkBName:   struct{}{},
+		checkTBBegin: struct{}{},
+		checkTBFirst: struct{}{},
+		checkTBName:  struct{}{},
 	}
 
 	a := &analysis.Analyzer{
@@ -123,6 +132,11 @@ func (t thelper) run(pass *analysis.Pass) (interface{}, error) {
 		return nil, nil
 	}
 
+	tbCheckOpts, ok := t.buildTBCheckFuncOpts(pass, ctxType)
+	if !ok {
+		return nil, nil
+	}
+
 	var reports reports
 	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 	nodeFilter := []ast.Node{
@@ -153,6 +167,7 @@ func (t thelper) run(pass *analysis.Pass) (interface{}, error) {
 
 		checkFunc(pass, &reports, fd, tCheckOpts)
 		checkFunc(pass, &reports, fd, bCheckOpts)
+		checkFunc(pass, &reports, fd, tbCheckOpts)
 	})
 
 	reports.Flush(pass)
@@ -230,6 +245,29 @@ func (t thelper) buildBenchmarkCheckFuncOpts(pass *analysis.Pass, ctxType types.
 	}, true
 }
 
+func (t thelper) buildTBCheckFuncOpts(pass *analysis.Pass, ctxType types.Type) (checkFuncOpts, bool) {
+	tbObj := analysisutil.ObjectOf(pass, "testing", "TB")
+	if tbObj == nil {
+		return checkFuncOpts{}, false
+	}
+
+	tbHelper, _, _ := types.LookupFieldOrMethod(tbObj.Type(), true, tbObj.Pkg(), "Helper")
+	if tbHelper == nil {
+		return checkFuncOpts{}, false
+	}
+
+	return checkFuncOpts{
+		skipPrefix: "",
+		varName:    "tb",
+		tbHelper:   tbHelper,
+		tbType:     tbObj.Type(),
+		ctxType:    ctxType,
+		checkBegin: t.enabledChecks.Enabled(checkTBBegin),
+		checkFirst: t.enabledChecks.Enabled(checkTBFirst),
+		checkName:  t.enabledChecks.Enabled(checkTBName),
+	}, true
+}
+
 type funcDecl struct {
 	Pos  token.Pos
 	Name *ast.Ident
@@ -238,7 +276,7 @@ type funcDecl struct {
 }
 
 func checkFunc(pass *analysis.Pass, reports *reports, funcDecl funcDecl, opts checkFuncOpts) {
-	if strings.HasPrefix(funcDecl.Name.Name, opts.skipPrefix) {
+	if opts.skipPrefix != "" && strings.HasPrefix(funcDecl.Name.Name, opts.skipPrefix) {
 		return
 	}
 
