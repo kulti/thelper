@@ -15,8 +15,9 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-const doc = "thelper detects tests helpers which is not start with t.Helper() method."
-const checksDoc = `coma separated list of enabled checks
+const (
+	doc       = "thelper detects tests helpers which is not start with t.Helper() method."
+	checksDoc = `coma separated list of enabled checks
 
 Available checks
 
@@ -25,10 +26,11 @@ Available checks
 ` + checkTName + `  - check *testing.T param has t name
 
 Also available similar checks for benchmark and TB helpers: ` +
-	checkBBegin + `, ` + checkBFirst + `, ` + checkBName +
-	checkBBegin + `, ` + checkBFirst + `, ` + checkBName + `
+		checkBBegin + `, ` + checkBFirst + `, ` + checkBName +
+		checkTBBegin + `, ` + checkTBFirst + `, ` + checkTBName + `
 
 `
+)
 
 type enabledChecksValue map[string]struct{}
 
