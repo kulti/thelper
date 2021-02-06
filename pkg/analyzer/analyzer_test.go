@@ -32,7 +32,7 @@ func TestAllChecks(t *testing.T) {
 		a := analyzer.NewAnalyzer()
 		err := a.Flags.Set("checks", "")
 		if err != nil {
-			t.Fatalf("failed to set checks empty value: %s", err.Error())
+			t.Fatalf("failed to set checks empty value: %v", err)
 		}
 		analysistest.Run(t, testdata, a, "t", "b", "tb")
 	})
@@ -63,7 +63,7 @@ func TestSingleCheck(t *testing.T) {
 			a := analyzer.NewAnalyzer()
 			err := a.Flags.Set("checks", tc)
 			if err != nil {
-				t.Fatalf("failed to set checks into %q: %s", tc, err.Error())
+				t.Fatalf("failed to set checks into %q: %v", tc, err)
 			}
 			analysistest.Run(t, testdata, a, tc)
 		})
