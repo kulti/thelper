@@ -56,4 +56,7 @@ func helperWithAnonymousHelper(b *testing.B) {
 	func(b *testing.B) {}(b) 
 }
 
+func helperWithNoName(_ *testing.B) {
+}
+
 func f() {}

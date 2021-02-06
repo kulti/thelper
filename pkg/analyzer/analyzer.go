@@ -261,15 +261,17 @@ func checkFunc(pass *analysis.Pass, reports *reports, funcDecl funcDecl, opts ch
 		}
 	}
 
-	if opts.checkName {
-		if len(p.Names) > 0 && p.Names[0].Name != opts.varName {
-			reports.Reportf(funcDecl.Pos, "parameter %s should have name %s", opts.tbType, opts.varName)
+	if len(p.Names) > 0 && p.Names[0].Name != "_" {
+		if opts.checkName {
+			if p.Names[0].Name != opts.varName {
+				reports.Reportf(funcDecl.Pos, "parameter %s should have name %s", opts.tbType, opts.varName)
+			}
 		}
-	}
 
-	if opts.checkBegin {
-		if len(funcDecl.Body.List) == 0 || !isTHelperCall(pass, funcDecl.Body.List[0], opts.tbHelper) {
-			reports.Reportf(funcDecl.Pos, "test helper function should start from %s.Helper()", opts.varName)
+		if opts.checkBegin {
+			if len(funcDecl.Body.List) == 0 || !isTHelperCall(pass, funcDecl.Body.List[0], opts.tbHelper) {
+				reports.Reportf(funcDecl.Pos, "test helper function should start from %s.Helper()", opts.varName)
+			}
 		}
 	}
 }

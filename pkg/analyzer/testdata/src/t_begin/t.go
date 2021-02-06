@@ -56,4 +56,7 @@ func helperWithAnonymousHelper(t *testing.T) {
 	func(t *testing.T) {}(t) // want "test helper function should start from t.Helper()"
 }
 
+func helperWithNoName(_ *testing.T) {
+}
+
 func f() {}
