@@ -5,7 +5,7 @@
 [![Coverage](https://coveralls.io/repos/github/kulti/thelper/badge.svg?branch=master)](https://coveralls.io/github/kulti/thelper?branch=master)
 [![MIT License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](LICENSE)
 
-thelper detects golang test helpers without `t.Helper()` call. Also, it checks the consistency of test helpers and has similar checks for benchmarks. Read futher to learn more.
+thelper detects golang test helpers without `t.Helper()` call. Also, it checks the consistency of test helpers and has similar checks for benchmarks. Read further to learn more.
 
 ## Why?
 ### Why I need to add t.Helper() into my helpers functions?
@@ -85,7 +85,7 @@ The same for benchmarks:
 
 ### Without t.Helper()
 
-```
+```go
 func TestSmth(t *testing.T) {
 	checkSmth(t)
 }
@@ -104,7 +104,7 @@ func checkSmth(t *testing.T) {
 
 ### With invalid name
 
-```
+```go
 // Bad
 func checkSmth(tt *testing.T) {
     // ...
@@ -118,7 +118,7 @@ func checkSmth(t *testing.T) {
 
 ### With t as not the first param
 
-```
+```go
 // Bad
 func checkSmth(doneCh <-chan struct{}, t *testing.T) {
     // ...
