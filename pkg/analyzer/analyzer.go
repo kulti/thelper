@@ -15,9 +15,8 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-const (
-	doc       = "thelper detects tests helpers which is not start with t.Helper() method."
-	checksDoc = `coma separated list of enabled checks
+const doc = "thelper detects tests helpers which is not start with t.Helper() method."
+const checksDoc = `coma separated list of enabled checks
 
 Available checks
 
@@ -26,11 +25,10 @@ Available checks
 ` + checkTName + `  - check *testing.T param has t name
 
 Also available similar checks for benchmark and TB helpers: ` +
-		checkBBegin + `, ` + checkBFirst + `, ` + checkBName +
-		checkBBegin + `, ` + checkBFirst + `, ` + checkBName + `
+	checkBBegin + `, ` + checkBFirst + `, ` + checkBName +
+	checkBBegin + `, ` + checkBFirst + `, ` + checkBName + `
 
 `
-)
 
 type enabledChecksValue map[string]struct{}
 
@@ -89,8 +87,8 @@ type thelper struct {
 // NewAnalyzer return a new thelper analyzer.
 // thelper analyzes Go test codes how they use t.Helper() method.
 func NewAnalyzer() *analysis.Analyzer {
-	th := thelper{}
-	th.enabledChecks = enabledChecksValue{
+	thelper := thelper{}
+	thelper.enabledChecks = enabledChecksValue{
 		checkTBegin:  struct{}{},
 		checkTFirst:  struct{}{},
 		checkTName:   struct{}{},
@@ -105,14 +103,14 @@ func NewAnalyzer() *analysis.Analyzer {
 	a := &analysis.Analyzer{
 		Name: "thelper",
 		Doc:  doc,
-		Run:  th.run,
+		Run:  thelper.run,
 		Requires: []*analysis.Analyzer{
 			inspect.Analyzer,
 		},
 	}
 
 	a.Flags.Init("thelper", flag.ExitOnError)
-	a.Flags.Var(&th.enabledChecks, "checks", checksDoc)
+	a.Flags.Var(&thelper.enabledChecks, "checks", checksDoc)
 
 	return a
 }
@@ -140,13 +138,13 @@ func (t thelper) run(pass *analysis.Pass) (interface{}, error) {
 	}
 
 	var reports reports
-	inspectorAnalyzer := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 	nodeFilter := []ast.Node{
 		(*ast.FuncDecl)(nil),
 		(*ast.FuncLit)(nil),
 		(*ast.CallExpr)(nil),
 	}
-	inspectorAnalyzer.Preorder(nodeFilter, func(node ast.Node) {
+	inspect.Preorder(nodeFilter, func(node ast.Node) {
 		var fd funcDecl
 		switch n := node.(type) {
 		case *ast.FuncLit:

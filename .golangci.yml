@@ -3,8 +3,6 @@ run:
     - pkg/analyzer/testdata
 
 linters-settings:
-  govet:
-    check-shadowing: true
   golint:
     min-confidence: 0
   goconst:
