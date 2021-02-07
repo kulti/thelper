@@ -26,7 +26,7 @@ Available checks
 ` + checkTName + `  - check *testing.T param has t name
 
 Also available similar checks for benchmark and TB helpers: ` +
-		checkBBegin + `, ` + checkBFirst + `, ` + checkBName +
+		checkBBegin + `, ` + checkBFirst + `, ` + checkBName + `,` +
 		checkTBBegin + `, ` + checkTBFirst + `, ` + checkTBName + `
 
 `
