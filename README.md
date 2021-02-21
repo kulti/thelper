@@ -5,7 +5,7 @@
 [![Coverage](https://coveralls.io/repos/github/kulti/thelper/badge.svg?branch=master)](https://coveralls.io/github/kulti/thelper?branch=master)
 [![MIT License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](LICENSE)
 
-thelper detects golang test helpers without `t.Helper()` call. Also, it checks the consistency of test helpers and has similar checks for benchmarks. Read further to learn more.
+thelper detects golang test helpers without `t.Helper()` call. Also, it checks the consistency of test helpers and has similar checks for benchmarks and TB interface. Read further to learn more.
 
 ## Why?
 ### Why I need to add t.Helper() into my helpers functions?
@@ -72,14 +72,23 @@ thelper --checks=t_first,b_name ./...
 ```
 
 ### Available checks
-* t_begin - t.Helper() should begin helper function.
-* t_name - *testing.T should have name t.
-* t_first - *testing.T should be the first param of helper function.
+* t_begin - `t.Helper()` should begin helper function.
+* t_name - `*testing.T` should have name `t`.
+* t_first - `*testing.T` should be the first param of helper function.
 
-The same for benchmarks:
-* b_begin - b.Helper() should begin helper function.
-* b_name - *testing.B should have name b.
-* b_first - *testing.B should be the first param of helper function.
+The same for benchmarks and TB interface:
+* b_begin - `b.Helper()` should begin helper function.
+* b_name - `*testing.B` should have name `b`.
+* b_first - `*testing.B` should be the first param of helper function.
+* tb_begin - `tb.Helper()` should begin helper function.
+* tb_name - `*testing.TB` should have name `tb`.
+* tb_first - `*testing.TB` should be the first param of helper function.
+
+### Exceptions
+
+* t_name allows using `_` name.
+* t_begin allows subtests not begin from `t.Helper()`.
+* t_first allows to be the second after `context.Context` param.
 
 ## Examples
 
