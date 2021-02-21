@@ -7,6 +7,10 @@ import (
 	"testing"
 )
 
+// -----------------------------
+// Free functions
+// -----------------------------
+
 func nonTestHelper(b int) {}
 
 func helperWithoutHelper(b *testing.B) {} // want "test helper function should start from b.Helper()"
@@ -57,6 +61,63 @@ func helperWithAnonymousHelper(b *testing.B) {
 }
 
 func helperWithNoName(_ *testing.B) {
+}
+
+// -----------------------------
+// Methods of helper type
+type helperType struct{}
+// -----------------------------
+
+func (h helperType) nonTestHelper(b int) {}
+
+func (h helperType) helperWithoutHelper(b *testing.B) {} // want "test helper function should start from b.Helper()"
+
+func (h helperType) helperWithHelper(b *testing.B) {
+	b.Helper()
+}
+
+func (h helperType) helperWithEmptyStringBeforeHelper(b *testing.B) {
+
+	b.Helper()
+}
+
+func (h helperType) helperWithHelperAfterAssignment(b *testing.B) { // want "test helper function should start from b.Helper()"
+	_ = 0
+	b.Helper()
+}
+
+func (h helperType) helperWithHelperAfterOtherCall(b *testing.B) { // want "test helper function should start from b.Helper()"
+	f()
+	b.Helper()
+}
+
+func (h helperType) helperWithHelperAfterOtherSelectionCall(b *testing.B) { // want "test helper function should start from b.Helper()"
+	b.Fail()
+	b.Helper()
+}
+
+func (h helperType) helperParamNotFirst(s string, i int, b *testing.B) { 
+	b.Helper()
+}
+
+func (h helperType) helperParamSecondWithoutContext(s string, b *testing.B, i int) { 
+	b.Helper()
+}
+
+func (h helperType) helperParamSecondWithContext(ctx context.Context, b *testing.B) {
+	b.Helper()
+}
+
+func (h helperType) helperWithIncorrectName(o *testing.B) { 
+	o.Helper()
+}
+
+func (h helperType) helperWithAnonymousHelper(b *testing.B) {
+	b.Helper()
+	func(b *testing.B) {}(b) // want "test helper function should start from b.Helper()"
+}
+
+func (h helperType) helperWithNoName(_ *testing.B) {
 }
 
 func f() {}
