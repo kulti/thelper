@@ -2,13 +2,13 @@ package b
 
 import "testing"
 
-func TestSubtestWithAnonymous(t *testing.T) {
-	t.Run("sub", func(t *testing.T) {})
+func BenchmarkSubtestWithAnonymous(b *testing.B) {
+	b.Run("sub", func(b *testing.B) {})
 }
 
-func TestSubtest(t *testing.T) {
-	t.Run("sub", check)
+func BenchmarkSubtest(b *testing.B) {
+	b.Run("sub", check)
 }
 
-func check(t *testing.T) {
+func check(b *testing.B) {
 }
