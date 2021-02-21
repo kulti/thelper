@@ -118,23 +118,7 @@ func NewAnalyzer() *analysis.Analyzer {
 }
 
 func (t thelper) run(pass *analysis.Pass) (interface{}, error) {
-	var ctxType types.Type
-	ctxObj := analysisutil.ObjectOf(pass, "context", "Context")
-	if ctxObj != nil {
-		ctxType = ctxObj.Type()
-	}
-
-	tCheckOpts, ok := t.buildTestCheckFuncOpts(pass, ctxType)
-	if !ok {
-		return nil, nil
-	}
-
-	bCheckOpts, ok := t.buildBenchmarkCheckFuncOpts(pass, ctxType)
-	if !ok {
-		return nil, nil
-	}
-
-	tbCheckOpts, ok := t.buildTBCheckFuncOpts(pass, ctxType)
+	tCheckOpts, bCheckOpts, tbCheckOpts, ok := t.buildCheckFuncOpts(pass)
 	if !ok {
 		return nil, nil
 	}
@@ -187,6 +171,31 @@ type checkFuncOpts struct {
 	checkBegin bool
 	checkFirst bool
 	checkName  bool
+}
+
+func (t thelper) buildCheckFuncOpts(pass *analysis.Pass) (checkFuncOpts, checkFuncOpts, checkFuncOpts, bool) {
+	var ctxType types.Type
+	ctxObj := analysisutil.ObjectOf(pass, "context", "Context")
+	if ctxObj != nil {
+		ctxType = ctxObj.Type()
+	}
+
+	tCheckOpts, ok := t.buildTestCheckFuncOpts(pass, ctxType)
+	if !ok {
+		return checkFuncOpts{}, checkFuncOpts{}, checkFuncOpts{}, false
+	}
+
+	bCheckOpts, ok := t.buildBenchmarkCheckFuncOpts(pass, ctxType)
+	if !ok {
+		return checkFuncOpts{}, checkFuncOpts{}, checkFuncOpts{}, false
+	}
+
+	tbCheckOpts, ok := t.buildTBCheckFuncOpts(pass, ctxType)
+	if !ok {
+		return checkFuncOpts{}, checkFuncOpts{}, checkFuncOpts{}, false
+	}
+
+	return tCheckOpts, bCheckOpts, tbCheckOpts, true
 }
 
 func (t thelper) buildTestCheckFuncOpts(pass *analysis.Pass, ctxType types.Type) (checkFuncOpts, bool) {
