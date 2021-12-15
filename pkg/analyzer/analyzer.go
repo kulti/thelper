@@ -333,6 +333,8 @@ func checkFunc(pass *analysis.Pass, reports *reports, funcDecl funcDecl, opts ch
 	}
 }
 
+// searchFuncParam search a function param with desired type.
+// It returns the param field, its position, and true if something is found.
 func searchFuncParam(pass *analysis.Pass, f funcDecl, p types.Type) (*ast.Field, int, bool) {
 	for i, f := range f.Type.Params.List {
 		if isExprHasType(pass, f.Type, p) {
@@ -342,6 +344,7 @@ func searchFuncParam(pass *analysis.Pass, f funcDecl, p types.Type) (*ast.Field,
 	return nil, 0, false
 }
 
+// isTHelperCall returns true if provided statement 's' is t.Helper() or b.Helper() call.
 func isTHelperCall(pass *analysis.Pass, s ast.Stmt, tHelper types.Object) bool {
 	exprStmt, ok := s.(*ast.ExprStmt)
 	if !ok {
@@ -361,7 +364,8 @@ func isTHelperCall(pass *analysis.Pass, s ast.Stmt, tHelper types.Object) bool {
 	return isSelectorCall(pass, selExpr, tHelper)
 }
 
-func extractSubtestExp(pass *analysis.Pass, e *ast.CallExpr, tbRun types.Object) ast.Expr {
+// extractSubtestExp analyzes that call expresion 'e' is t.Run or b.Run
+// and returns subtest function.
 	selExpr, ok := e.Fun.(*ast.SelectorExpr)
 	if !ok {
 		return nil
@@ -378,6 +382,8 @@ func extractSubtestExp(pass *analysis.Pass, e *ast.CallExpr, tbRun types.Object)
 	return e.Args[1]
 }
 
+// funcDefPosition returns a function's position.
+// It works with anonymous functions as well with function names.
 func funcDefPosition(pass *analysis.Pass, e ast.Expr) token.Pos {
 	anonFunLit, ok := e.(*ast.FuncLit)
 	if ok {
@@ -401,6 +407,8 @@ func funcDefPosition(pass *analysis.Pass, e ast.Expr) token.Pos {
 	return funDef.Pos()
 }
 
+// isSelectorCall checks is selExpr is a call expresion on specific callObj.
+// Useful to check Run() call for t.Run or b.Run.
 func isSelectorCall(pass *analysis.Pass, selExpr *ast.SelectorExpr, callObj types.Object) bool {
 	sel, ok := pass.TypesInfo.Selections[selExpr]
 	if !ok {
