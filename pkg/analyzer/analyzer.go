@@ -335,12 +335,7 @@ func checkFunc(pass *analysis.Pass, reports *reports, funcDecl funcDecl, opts ch
 
 func searchFuncParam(pass *analysis.Pass, f funcDecl, p types.Type) (*ast.Field, int, bool) {
 	for i, f := range f.Type.Params.List {
-		typeInfo, ok := pass.TypesInfo.Types[f.Type]
-		if !ok {
-			continue
-		}
-
-		if types.Identical(typeInfo.Type, p) {
+		if isExprHasType(pass, f.Type, p) {
 			return f, i, true
 		}
 	}
@@ -413,4 +408,14 @@ func isSelectorCall(pass *analysis.Pass, selExpr *ast.SelectorExpr, callObj type
 	}
 
 	return sel.Obj() == callObj
+}
+
+// isExprHasType returns true if expr has expected type.
+func isExprHasType(pass *analysis.Pass, expr ast.Expr, expType types.Type) bool {
+	typeInfo, ok := pass.TypesInfo.Types[expr]
+	if !ok {
+		return false
+	}
+
+	return types.Identical(typeInfo.Type, expType)
 }
