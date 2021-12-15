@@ -12,3 +12,11 @@ func BenchmarkSubtest(b *testing.B) {
 
 func check(b *testing.B) {
 }
+
+func BenchmarkSubtestWithBuilder(b *testing.B) {
+	b.Run("sub", subtestBuilder())
+}
+
+func subtestBuilder() func(b *testing.B) {
+	return func(b *testing.B) {}
+}

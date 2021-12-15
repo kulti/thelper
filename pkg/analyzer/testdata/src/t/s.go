@@ -32,3 +32,11 @@ func (sh subhelper) check(t *testing.T) {
 }
 
 func (sh subhelper) anotherCheck(t *testing.T) {} // want "test helper function should start from t.Helper()"
+
+func TestSubtestWithBuilder(t *testing.T) {
+	t.Run("sub", subtestBuilder())
+}
+
+func subtestBuilder() func(t *testing.T) {
+	return func(t *testing.T) {}
+}
