@@ -144,9 +144,9 @@ func (t thelper) run(pass *analysis.Pass) (interface{}, error) {
 			fd.Body = n.Body
 			fd.Name = n.Name
 		case *ast.CallExpr:
-			tbRunSubtestExpr := extractSubtestExp(pass, n, tCheckOpts.tbRun)
+			tbRunSubtestExpr := extractSubtestExp(pass, n, tCheckOpts.tbRun, tCheckOpts.tbTestFuncType)
 			if tbRunSubtestExpr == nil {
-				tbRunSubtestExpr = extractSubtestExp(pass, n, bCheckOpts.tbRun)
+				tbRunSubtestExpr = extractSubtestExp(pass, n, bCheckOpts.tbRun, bCheckOpts.tbTestFuncType)
 			}
 
 			if tbRunSubtestExpr != nil {
@@ -170,15 +170,16 @@ func (t thelper) run(pass *analysis.Pass) (interface{}, error) {
 }
 
 type checkFuncOpts struct {
-	skipPrefix string
-	varName    string
-	tbHelper   types.Object
-	tbRun      types.Object
-	tbType     types.Type
-	ctxType    types.Type
-	checkBegin bool
-	checkFirst bool
-	checkName  bool
+	skipPrefix     string
+	varName        string
+	tbHelper       types.Object
+	tbRun          types.Object
+	tbTestFuncType types.Type
+	tbType         types.Type
+	ctxType        types.Type
+	checkBegin     bool
+	checkFirst     bool
+	checkName      bool
 }
 
 func (t thelper) buildCheckFuncOpts(pass *analysis.Pass) (checkFuncOpts, checkFuncOpts, checkFuncOpts, bool) {
@@ -222,16 +223,19 @@ func (t thelper) buildTestCheckFuncOpts(pass *analysis.Pass, ctxType types.Type)
 		return checkFuncOpts{}, false
 	}
 
+	tbType := types.NewPointer(tObj.Type())
+	tVar := types.NewVar(token.NoPos, nil, "t", tbType)
 	return checkFuncOpts{
-		skipPrefix: "Test",
-		varName:    "t",
-		tbHelper:   tHelper,
-		tbRun:      tRun,
-		tbType:     types.NewPointer(tObj.Type()),
-		ctxType:    ctxType,
-		checkBegin: t.enabledChecks.Enabled(checkTBegin),
-		checkFirst: t.enabledChecks.Enabled(checkTFirst),
-		checkName:  t.enabledChecks.Enabled(checkTName),
+		skipPrefix:     "Test",
+		varName:        "t",
+		tbHelper:       tHelper,
+		tbRun:          tRun,
+		tbType:         tbType,
+		tbTestFuncType: types.NewSignature(nil, types.NewTuple(tVar), nil, false),
+		ctxType:        ctxType,
+		checkBegin:     t.enabledChecks.Enabled(checkTBegin),
+		checkFirst:     t.enabledChecks.Enabled(checkTFirst),
+		checkName:      t.enabledChecks.Enabled(checkTName),
 	}, true
 }
 
@@ -251,16 +255,19 @@ func (t thelper) buildBenchmarkCheckFuncOpts(pass *analysis.Pass, ctxType types.
 		return checkFuncOpts{}, false
 	}
 
+	tbType := types.NewPointer(bObj.Type())
+	bVar := types.NewVar(token.NoPos, nil, "b", tbType)
 	return checkFuncOpts{
-		skipPrefix: "Benchmark",
-		varName:    "b",
-		tbHelper:   bHelper,
-		tbRun:      bRun,
-		tbType:     types.NewPointer(bObj.Type()),
-		ctxType:    ctxType,
-		checkBegin: t.enabledChecks.Enabled(checkBBegin),
-		checkFirst: t.enabledChecks.Enabled(checkBFirst),
-		checkName:  t.enabledChecks.Enabled(checkBName),
+		skipPrefix:     "Benchmark",
+		varName:        "b",
+		tbHelper:       bHelper,
+		tbRun:          bRun,
+		tbType:         types.NewPointer(bObj.Type()),
+		tbTestFuncType: types.NewSignature(nil, types.NewTuple(bVar), nil, false),
+		ctxType:        ctxType,
+		checkBegin:     t.enabledChecks.Enabled(checkBBegin),
+		checkFirst:     t.enabledChecks.Enabled(checkBFirst),
+		checkName:      t.enabledChecks.Enabled(checkBName),
 	}, true
 }
 
@@ -366,6 +373,9 @@ func isTHelperCall(pass *analysis.Pass, s ast.Stmt, tHelper types.Object) bool {
 
 // extractSubtestExp analyzes that call expresion 'e' is t.Run or b.Run
 // and returns subtest function.
+func extractSubtestExp(
+	pass *analysis.Pass, e *ast.CallExpr, tbRun types.Object, testFuncType types.Type,
+) ast.Expr {
 	selExpr, ok := e.Fun.(*ast.SelectorExpr)
 	if !ok {
 		return nil
@@ -379,7 +389,45 @@ func isTHelperCall(pass *analysis.Pass, s ast.Stmt, tHelper types.Object) bool {
 		return nil
 	}
 
+	if f := unwrapTestingFunctionBuilding(pass, e.Args[1], testFuncType); f != nil {
+		return f
+	}
+
 	return e.Args[1]
+}
+
+// unwrapTestingFunctionConstruction checks that expresion is build testing functions
+// and returns the result of building.
+func unwrapTestingFunctionBuilding(pass *analysis.Pass, expr ast.Expr, testFuncType types.Type) ast.Expr {
+	callExpr, ok := expr.(*ast.CallExpr)
+	if !ok {
+		return nil
+	}
+
+	funIdent, ok := callExpr.Fun.(*ast.Ident)
+	if !ok {
+		return nil
+	}
+
+	funDecl, ok := funIdent.Obj.Decl.(*ast.FuncDecl)
+	if !ok {
+		return nil
+	}
+
+	results := funDecl.Type.Results.List
+	if len(results) != 1 || !isExprHasType(pass, results[0].Type, testFuncType) {
+		return nil
+	}
+
+	for _, bodyStmt := range funDecl.Body.List {
+		if retStmt, ok := bodyStmt.(*ast.ReturnStmt); ok {
+			if len(retStmt.Results) == 1 {
+				return retStmt.Results[0]
+			}
+		}
+	}
+
+	return nil
 }
 
 // funcDefPosition returns a function's position.
