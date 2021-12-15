@@ -144,13 +144,15 @@ func (t thelper) run(pass *analysis.Pass) (interface{}, error) {
 			fd.Body = n.Body
 			fd.Name = n.Name
 		case *ast.CallExpr:
-			tbRunSubtestExpr := extractSubtestExp(pass, n, tCheckOpts.tbRun, tCheckOpts.tbTestFuncType)
-			if tbRunSubtestExpr == nil {
-				tbRunSubtestExpr = extractSubtestExp(pass, n, bCheckOpts.tbRun, bCheckOpts.tbTestFuncType)
+			tbRunSubtestExprs := extractSubtestExp(pass, n, tCheckOpts.tbRun, tCheckOpts.tbTestFuncType)
+			if len(tbRunSubtestExprs) == 0 {
+				tbRunSubtestExprs = extractSubtestExp(pass, n, bCheckOpts.tbRun, bCheckOpts.tbTestFuncType)
 			}
 
-			if tbRunSubtestExpr != nil {
-				reports.Filter(funcDefPosition(pass, tbRunSubtestExpr))
+			if len(tbRunSubtestExprs) > 0 {
+				for _, expr := range tbRunSubtestExprs {
+					reports.Filter(funcDefPosition(pass, expr))
+				}
 			} else {
 				reports.NoFilter(funcDefPosition(pass, n.Fun))
 			}
@@ -375,7 +377,7 @@ func isTHelperCall(pass *analysis.Pass, s ast.Stmt, tHelper types.Object) bool {
 // and returns subtest function.
 func extractSubtestExp(
 	pass *analysis.Pass, e *ast.CallExpr, tbRun types.Object, testFuncType types.Type,
-) ast.Expr {
+) []ast.Expr {
 	selExpr, ok := e.Fun.(*ast.SelectorExpr)
 	if !ok {
 		return nil
@@ -389,16 +391,16 @@ func extractSubtestExp(
 		return nil
 	}
 
-	if f := unwrapTestingFunctionBuilding(pass, e.Args[1], testFuncType); f != nil {
-		return f
+	if funcs := unwrapTestingFunctionBuilding(pass, e.Args[1], testFuncType); funcs != nil {
+		return funcs
 	}
 
-	return e.Args[1]
+	return []ast.Expr{e.Args[1]}
 }
 
 // unwrapTestingFunctionConstruction checks that expresion is build testing functions
 // and returns the result of building.
-func unwrapTestingFunctionBuilding(pass *analysis.Pass, expr ast.Expr, testFuncType types.Type) ast.Expr {
+func unwrapTestingFunctionBuilding(pass *analysis.Pass, expr ast.Expr, testFuncType types.Type) []ast.Expr {
 	callExpr, ok := expr.(*ast.CallExpr)
 	if !ok {
 		return nil
@@ -419,15 +421,21 @@ func unwrapTestingFunctionBuilding(pass *analysis.Pass, expr ast.Expr, testFuncT
 		return nil
 	}
 
-	for _, bodyStmt := range funDecl.Body.List {
-		if retStmt, ok := bodyStmt.(*ast.ReturnStmt); ok {
+	var funcs []ast.Expr
+	ast.Inspect(funDecl.Body, func(n ast.Node) bool {
+		if n == nil {
+			return false
+		}
+
+		if retStmt, ok := n.(*ast.ReturnStmt); ok {
 			if len(retStmt.Results) == 1 {
-				return retStmt.Results[0]
+				funcs = append(funcs, retStmt.Results[0])
 			}
 		}
-	}
+		return true
+	})
 
-	return nil
+	return funcs
 }
 
 // funcDefPosition returns a function's position.

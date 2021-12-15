@@ -34,9 +34,13 @@ func (sh subhelper) check(t *testing.T) {
 func (sh subhelper) anotherCheck(t *testing.T) {} // want "test helper function should start from t.Helper()"
 
 func TestSubtestWithBuilder(t *testing.T) {
-	t.Run("sub", subtestBuilder())
+	t.Run("sub", subtestBuilder("first"))
+	t.Run("sub", subtestBuilder("second"))
 }
 
-func subtestBuilder() func(t *testing.T) {
+func subtestBuilder(name string) func(t *testing.T) {
+	if name == "first" {
+		return func(t *testing.T) {}
+	}
 	return func(t *testing.T) {}
 }
