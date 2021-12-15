@@ -406,23 +406,38 @@ func unwrapTestingFunctionBuilding(pass *analysis.Pass, expr ast.Expr, testFuncT
 		return nil
 	}
 
-	funIdent, ok := callExpr.Fun.(*ast.Ident)
-	if !ok {
+	var funcDecl funcDecl
+	switch f := callExpr.Fun.(type) {
+	case *ast.FuncLit:
+		funcDecl.Body = f.Body
+		funcDecl.Type = f.Type
+	case *ast.Ident:
+		funObjDecl, ok := f.Obj.Decl.(*ast.FuncDecl)
+		if !ok {
+			return nil
+		}
+
+		funcDecl.Body = funObjDecl.Body
+		funcDecl.Type = funObjDecl.Type
+	case *ast.SelectorExpr:
+		fd := findSelectroDeclaration(pass, f)
+		if fd == nil {
+			return nil
+		}
+
+		funcDecl.Body = fd.Body
+		funcDecl.Type = fd.Type
+	default:
 		return nil
 	}
 
-	funDecl, ok := funIdent.Obj.Decl.(*ast.FuncDecl)
-	if !ok {
-		return nil
-	}
-
-	results := funDecl.Type.Results.List
+	results := funcDecl.Type.Results.List
 	if len(results) != 1 || !isExprHasType(pass, results[0].Type, testFuncType) {
 		return nil
 	}
 
 	var funcs []ast.Expr
-	ast.Inspect(funDecl.Body, func(n ast.Node) bool {
+	ast.Inspect(funcDecl.Body, func(n ast.Node) bool {
 		if n == nil {
 			return false
 		}
@@ -482,4 +497,39 @@ func isExprHasType(pass *analysis.Pass, expr ast.Expr, expType types.Type) bool 
 	}
 
 	return types.Identical(typeInfo.Type, expType)
+}
+
+// findSelectroDeclaration returns function declaration called by selectro expression.
+func findSelectroDeclaration(pass *analysis.Pass, expr *ast.SelectorExpr) *ast.FuncDecl {
+	xsel, ok := pass.TypesInfo.Selections[expr]
+	if !ok {
+		return nil
+	}
+
+	for _, file := range pass.Files {
+		for _, decl := range file.Decls {
+			fd, ok := decl.(*ast.FuncDecl)
+			if ok && fd.Recv != nil && len(fd.Recv.List) == 1 {
+				recvType, ok := fd.Recv.List[0].Type.(*ast.Ident)
+				if !ok {
+					continue
+				}
+
+				recvObj, ok := pass.TypesInfo.Uses[recvType]
+				if !ok {
+					continue
+				}
+
+				if !(types.Identical(recvObj.Type(), xsel.Recv())) {
+					continue
+				}
+
+				if fd.Name.Name == expr.Sel.Name {
+					return fd
+				}
+			}
+		}
+	}
+
+	return nil
 }
