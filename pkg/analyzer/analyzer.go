@@ -420,7 +420,7 @@ func unwrapTestingFunctionBuilding(pass *analysis.Pass, expr ast.Expr, testFuncT
 		funcDecl.Body = funObjDecl.Body
 		funcDecl.Type = funObjDecl.Type
 	case *ast.SelectorExpr:
-		fd := findSelectroDeclaration(pass, f)
+		fd := findSelectorDeclaration(pass, f)
 		if fd == nil {
 			return nil
 		}
@@ -499,8 +499,8 @@ func isExprHasType(pass *analysis.Pass, expr ast.Expr, expType types.Type) bool 
 	return types.Identical(typeInfo.Type, expType)
 }
 
-// findSelectroDeclaration returns function declaration called by selectro expression.
-func findSelectroDeclaration(pass *analysis.Pass, expr *ast.SelectorExpr) *ast.FuncDecl {
+// findSelectorDeclaration returns function declaration called by selector expression.
+func findSelectorDeclaration(pass *analysis.Pass, expr *ast.SelectorExpr) *ast.FuncDecl {
 	xsel, ok := pass.TypesInfo.Selections[expr]
 	if !ok {
 		return nil
