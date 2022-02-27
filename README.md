@@ -33,15 +33,16 @@ func testGood(t *testing.T) {
 }
 ```
 
-### Why t.Helper() should begin my test helper function?
+### Why should I call `t.Helper()` as the first statement in my test helper functions?
 
-Why not? If you place it as the first call you unlikely add some assertion before.
+Because `t.Helper()` only affects asserts that are called _after_ the `t.Helper()` call, so requiring it to be the first statement helps ensure
+all assertions in the helper function are affected.
 
-### Why I need to name *testing.T as t? Why it should be the first?
+### Why do I need to name `*testing.T` as `t`? Why it should be the first parameter?
 
-It adds more consistency into your code. When common variables have the same name and placed into the same position it simpler to understand and read.
+It adds more consistency into your code. When common variables have the same name and are placed into the same position, it makes it easier to understand and read.
 
-Note that it is not a strong restriction to be the first. It can be the second to be compatible with `context.Context` param linting.
+Note that you can also have it as the second parameter - this is primarily intended to allow compatibility with `context.Context`.
 
 ## Installation
 
@@ -66,22 +67,22 @@ thelper ./...
 
 If you run via golangci-lint look at [.golangci.example.yml](https://golangci-lint.run/usage/configuration/#config-file) for an example of the configuration.
 
-Otherwise you can run thelper with `--checks` command line argument. E.g. the following command checks that `*testing.T` is the first param and `*testing.B` has name `b`:
+Otherwise you can run thelper with `--checks` command line argument. E.g. the following command checks that `*testing.T` is the first param and `*testing.B` is named `b`:
 ```
 thelper --checks=t_first,b_name ./...
 ```
 
 ### Available checks
 * t_begin - `t.Helper()` should begin helper function.
-* t_name - `*testing.T` should have name `t`.
+* t_name - `*testing.T` should be named `t`.
 * t_first - `*testing.T` should be the first param of helper function.
 
 The same for benchmarks and TB interface:
 * b_begin - `b.Helper()` should begin helper function.
-* b_name - `*testing.B` should have name `b`.
+* b_name - `*testing.B` should be named `b`.
 * b_first - `*testing.B` should be the first param of helper function.
 * tb_begin - `tb.Helper()` should begin helper function.
-* tb_name - `*testing.TB` should have name `tb`.
+* tb_name - `*testing.TB` should be named `tb`.
 * tb_first - `*testing.TB` should be the first param of helper function.
 
 ### Exceptions
