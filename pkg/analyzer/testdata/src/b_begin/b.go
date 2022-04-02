@@ -30,7 +30,7 @@ func helperWithHelperAfterAssignment(b *testing.B) { // want "test helper functi
 }
 
 func helperWithHelperAfterOtherCall(b *testing.B) { // want "test helper function should start from b.Helper()"
-	f()
+	ff()
 	b.Helper()
 }
 
@@ -87,7 +87,7 @@ func (h helperType) helperWithHelperAfterAssignment(b *testing.B) { // want "tes
 }
 
 func (h helperType) helperWithHelperAfterOtherCall(b *testing.B) { // want "test helper function should start from b.Helper()"
-	f()
+	ff()
 	b.Helper()
 }
 
@@ -120,4 +120,4 @@ func (h helperType) helperWithAnonymousHelper(b *testing.B) {
 func (h helperType) helperWithNoName(_ *testing.B) {
 }
 
-func f() {}
+func ff() {}
