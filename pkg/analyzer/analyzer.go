@@ -123,8 +123,12 @@ func (t thelper) run(pass *analysis.Pass) (interface{}, error) {
 		return nil, nil
 	}
 
+	inspect, ok := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+	if !ok {
+		return nil, nil
+	}
+
 	var reports reports
-	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 	nodeFilter := []ast.Node{
 		(*ast.FuncDecl)(nil),
 		(*ast.FuncLit)(nil),
