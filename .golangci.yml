@@ -27,3 +27,10 @@ linters:
   - gomnd
   - gocognit
   - nestif
+  - varnamelen
+  - interfacer
+  - maligned
+  - scopelint
+  - golint
+  - cyclop
+  - nilnil
