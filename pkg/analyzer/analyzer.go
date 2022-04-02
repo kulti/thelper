@@ -26,6 +26,7 @@ Available checks
 ` + checkTName + `  - check *testing.T param has t name
 
 Also available similar checks for benchmark and TB helpers: ` +
+		checkFBegin + `, ` + checkFFirst + `, ` + checkFName + `,` +
 		checkBBegin + `, ` + checkBFirst + `, ` + checkBName + `,` +
 		checkTBBegin + `, ` + checkTBFirst + `, ` + checkTBName + `
 
@@ -60,6 +61,7 @@ func (m enabledChecksValue) Set(s string) error {
 	for _, v := range ss {
 		switch v {
 		case checkTBegin, checkTFirst, checkTName,
+			checkFBegin, checkFFirst, checkFName,
 			checkBBegin, checkBFirst, checkBName,
 			checkTBBegin, checkTBFirst, checkTBName:
 			m[v] = struct{}{}
@@ -74,6 +76,9 @@ const (
 	checkTBegin  = "t_begin"
 	checkTFirst  = "t_first"
 	checkTName   = "t_name"
+	checkFBegin  = "f_begin"
+	checkFFirst  = "f_first"
+	checkFName   = "f_name"
 	checkBBegin  = "b_begin"
 	checkBFirst  = "b_first"
 	checkBName   = "b_name"
@@ -94,6 +99,9 @@ func NewAnalyzer() *analysis.Analyzer {
 		checkTBegin:  struct{}{},
 		checkTFirst:  struct{}{},
 		checkTName:   struct{}{},
+		checkFBegin:  struct{}{},
+		checkFFirst:  struct{}{},
+		checkFName:   struct{}{},
 		checkBBegin:  struct{}{},
 		checkBFirst:  struct{}{},
 		checkBName:   struct{}{},
@@ -118,7 +126,7 @@ func NewAnalyzer() *analysis.Analyzer {
 }
 
 func (t thelper) run(pass *analysis.Pass) (interface{}, error) {
-	tCheckOpts, bCheckOpts, tbCheckOpts, ok := t.buildCheckFuncOpts(pass)
+	tCheckOpts, fCheckOpts, bCheckOpts, tbCheckOpts, ok := t.buildCheckFuncOpts(pass)
 	if !ok {
 		return nil, nil
 	}
@@ -152,6 +160,9 @@ func (t thelper) run(pass *analysis.Pass) (interface{}, error) {
 			if len(tbRunSubtestExprs) == 0 {
 				tbRunSubtestExprs = extractSubtestExp(pass, n, bCheckOpts.tbRun, bCheckOpts.tbTestFuncType)
 			}
+			if len(tbRunSubtestExprs) == 0 {
+				tbRunSubtestExprs = extractSubtestFuzzExp(pass, n, fCheckOpts.tbRun)
+			}
 
 			if len(tbRunSubtestExprs) > 0 {
 				for _, expr := range tbRunSubtestExprs {
@@ -166,6 +177,7 @@ func (t thelper) run(pass *analysis.Pass) (interface{}, error) {
 		}
 
 		checkFunc(pass, &reports, fd, tCheckOpts)
+		checkFunc(pass, &reports, fd, fCheckOpts)
 		checkFunc(pass, &reports, fd, bCheckOpts)
 		checkFunc(pass, &reports, fd, tbCheckOpts)
 	})
@@ -188,7 +200,7 @@ type checkFuncOpts struct {
 	checkName      bool
 }
 
-func (t thelper) buildCheckFuncOpts(pass *analysis.Pass) (checkFuncOpts, checkFuncOpts, checkFuncOpts, bool) {
+func (t thelper) buildCheckFuncOpts(pass *analysis.Pass) (checkFuncOpts, checkFuncOpts, checkFuncOpts, checkFuncOpts, bool) {
 	var ctxType types.Type
 	ctxObj := analysisutil.ObjectOf(pass, "context", "Context")
 	if ctxObj != nil {
@@ -197,20 +209,25 @@ func (t thelper) buildCheckFuncOpts(pass *analysis.Pass) (checkFuncOpts, checkFu
 
 	tCheckOpts, ok := t.buildTestCheckFuncOpts(pass, ctxType)
 	if !ok {
-		return checkFuncOpts{}, checkFuncOpts{}, checkFuncOpts{}, false
+		return checkFuncOpts{}, checkFuncOpts{}, checkFuncOpts{}, checkFuncOpts{}, false
+	}
+
+	fCheckOpts, ok := t.buildFuzzCheckFuncOpts(pass, ctxType)
+	if !ok {
+		return checkFuncOpts{}, checkFuncOpts{}, checkFuncOpts{}, checkFuncOpts{}, false
 	}
 
 	bCheckOpts, ok := t.buildBenchmarkCheckFuncOpts(pass, ctxType)
 	if !ok {
-		return checkFuncOpts{}, checkFuncOpts{}, checkFuncOpts{}, false
+		return checkFuncOpts{}, checkFuncOpts{}, checkFuncOpts{}, checkFuncOpts{}, false
 	}
 
 	tbCheckOpts, ok := t.buildTBCheckFuncOpts(pass, ctxType)
 	if !ok {
-		return checkFuncOpts{}, checkFuncOpts{}, checkFuncOpts{}, false
+		return checkFuncOpts{}, checkFuncOpts{}, checkFuncOpts{}, checkFuncOpts{}, false
 	}
 
-	return tCheckOpts, bCheckOpts, tbCheckOpts, true
+	return tCheckOpts, fCheckOpts, bCheckOpts, tbCheckOpts, true
 }
 
 func (t thelper) buildTestCheckFuncOpts(pass *analysis.Pass, ctxType types.Type) (checkFuncOpts, bool) {
@@ -242,6 +259,35 @@ func (t thelper) buildTestCheckFuncOpts(pass *analysis.Pass, ctxType types.Type)
 		checkBegin:     t.enabledChecks.Enabled(checkTBegin),
 		checkFirst:     t.enabledChecks.Enabled(checkTFirst),
 		checkName:      t.enabledChecks.Enabled(checkTName),
+	}, true
+}
+
+func (t thelper) buildFuzzCheckFuncOpts(pass *analysis.Pass, ctxType types.Type) (checkFuncOpts, bool) {
+	fObj := analysisutil.ObjectOf(pass, "testing", "F")
+	if fObj == nil {
+		return checkFuncOpts{}, false
+	}
+
+	fHelper, _, _ := types.LookupFieldOrMethod(fObj.Type(), true, fObj.Pkg(), "Helper")
+	if fHelper == nil {
+		return checkFuncOpts{}, false
+	}
+
+	tFuzz, _, _ := types.LookupFieldOrMethod(fObj.Type(), true, fObj.Pkg(), "Fuzz")
+	if tFuzz == nil {
+		return checkFuncOpts{}, false
+	}
+
+	return checkFuncOpts{
+		skipPrefix: "Fuzz",
+		varName:    "f",
+		tbHelper:   fHelper,
+		tbRun:      tFuzz,
+		tbType:     types.NewPointer(fObj.Type()),
+		ctxType:    ctxType,
+		checkBegin: t.enabledChecks.Enabled(checkFBegin),
+		checkFirst: t.enabledChecks.Enabled(checkFFirst),
+		checkName:  t.enabledChecks.Enabled(checkFName),
 	}, true
 }
 
@@ -400,6 +446,27 @@ func extractSubtestExp(
 	}
 
 	return []ast.Expr{e.Args[1]}
+}
+
+// extractSubtestFuzzExp analyzes that call expresion 'e' is f.Fuzz
+// and returns subtest function.
+func extractSubtestFuzzExp(
+	pass *analysis.Pass, e *ast.CallExpr, tbRun types.Object,
+) []ast.Expr {
+	selExpr, ok := e.Fun.(*ast.SelectorExpr)
+	if !ok {
+		return nil
+	}
+
+	if !isSelectorCall(pass, selExpr, tbRun) {
+		return nil
+	}
+
+	if len(e.Args) != 1 {
+		return nil
+	}
+
+	return []ast.Expr{e.Args[0]}
 }
 
 // unwrapTestingFunctionConstruction checks that expresion is build testing functions
