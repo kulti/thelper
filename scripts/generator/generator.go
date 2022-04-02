@@ -47,7 +47,7 @@ func {{.}}helperWithHelperAfterAssignment({{$.Name}} {{$.Testing}}.{{$.UName}}) 
 }
 
 func {{.}}helperWithHelperAfterOtherCall({{$.Name}} {{$.Testing}}.{{$.UName}}) { {{if or (eq $.Check "") (eq $.Check "begin")}}// want "test helper function should start from {{$.Name}}.Helper()"{{end}}
-	f()
+	ff()
 	{{$.Name}}.Helper()
 }
 
@@ -82,7 +82,7 @@ func {{.}}helperWithNoName(_ {{$.Testing}}.{{$.UName}}) {
 
 {{end -}}
 
-func f() {}
+func ff() {}
 `
 
 func main() {

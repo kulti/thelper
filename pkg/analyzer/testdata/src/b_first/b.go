@@ -30,7 +30,7 @@ func helperWithHelperAfterAssignment(b *testing.B) {
 }
 
 func helperWithHelperAfterOtherCall(b *testing.B) { 
-	f()
+	ff()
 	b.Helper()
 }
 
@@ -87,7 +87,7 @@ func (h helperType) helperWithHelperAfterAssignment(b *testing.B) {
 }
 
 func (h helperType) helperWithHelperAfterOtherCall(b *testing.B) { 
-	f()
+	ff()
 	b.Helper()
 }
 
@@ -120,4 +120,4 @@ func (h helperType) helperWithAnonymousHelper(b *testing.B) {
 func (h helperType) helperWithNoName(_ *testing.B) {
 }
 
-func f() {}
+func ff() {}
