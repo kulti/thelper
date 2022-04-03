@@ -77,7 +77,10 @@ thelper --checks=t_first,b_name ./...
 * t_name - `*testing.T` should be named `t`.
 * t_first - `*testing.T` should be the first param of helper function.
 
-The same for benchmarks and TB interface:
+The same for fuzzing, benchmarks and TB interface:
+* f_begin - `f.Helper()` should begin helper function.
+* f_name - `*testing.F` should be named `f`.
+* f_first - `*testing.F` should be the first param of helper function.
 * b_begin - `b.Helper()` should begin helper function.
 * b_name - `*testing.B` should be named `b`.
 * b_first - `*testing.B` should be the first param of helper function.
@@ -88,7 +91,7 @@ The same for benchmarks and TB interface:
 ### Exceptions
 
 * t_name allows using `_` name.
-* t_begin allows subtests not begin from `t.Helper()`.
+* t_begin allows subtests and fuzz tests not begin from `t.Helper()`.
 * t_first allows to be the second after `context.Context` param.
 
 ## Examples
