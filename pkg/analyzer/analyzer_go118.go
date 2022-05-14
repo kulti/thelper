@@ -13,7 +13,7 @@ import (
 func (t thelper) buildFuzzCheckFuncOpts(pass *analysis.Pass, ctxType types.Type) (checkFuncOpts, bool) {
 	fObj := analysisutil.ObjectOf(pass, "testing", "F")
 	if fObj == nil {
-		return checkFuncOpts{}, false
+		return checkFuncOpts{}, true // compatibility with go1.17
 	}
 
 	fHelper, _, _ := types.LookupFieldOrMethod(fObj.Type(), true, fObj.Pkg(), "Helper")
