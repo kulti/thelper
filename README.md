@@ -47,7 +47,7 @@ Note that you can also have it as the second parameter - this is primarily inten
 ## Installation
 
 ```
-go get github.com/kulti/thelper/cmd/thelper
+go install github.com/kulti/thelper/cmd/thelper@latest
 ```
 
 ## Usage
