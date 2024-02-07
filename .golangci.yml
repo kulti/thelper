@@ -12,25 +12,35 @@ linters-settings:
     locale: US
   gci:
     local-prefixes: github.com/kulti/thelper
+  nolintlint:
+    require-explanation: true
+    require-specific: true
 
 linters:
   enable-all: true
   disable:
-  - lll
-  - prealloc
-  - dupl
-  - wsl
-  - nlreturn
-  - goerr113
-  - exhaustivestruct
-  - paralleltest
-  - gomnd
-  - gocognit
-  - nestif
-  - varnamelen
-  - interfacer
-  - maligned
-  - scopelint
-  - golint
-  - cyclop
-  - nilnil
+    - cyclop
+    - deadcode # deprecated
+    - depguard # Not looks useful for this project
+    - dupl
+    - exhaustivestruct # deprecated
+    - exhaustruct # Make use of zero-values and partial initialization.
+    - gocognit
+    - goerr113
+    - golint
+    - gomnd
+    - ifshort # deprecated
+    - interfacer
+    - lll
+    - maligned
+    - nestif
+    - nilnil
+    - nlreturn
+    - nosnakecase # deprecated
+    - paralleltest
+    - prealloc
+    - scopelint
+    - structcheck # deprecated
+    - varcheck # deprecated
+    - varnamelen
+    - wsl
