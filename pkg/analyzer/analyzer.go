@@ -16,7 +16,9 @@ import (
 )
 
 const (
-	doc       = "thelper detects tests helpers which is not start with t.Helper() method."
+	doc = "thelper detects tests helpers which is not start with t.Helper() method."
+
+	//nolint:goconst // Just a repeated coma, cannot be written better.
 	checksDoc = `coma separated list of enabled checks
 
 Available checks
@@ -254,7 +256,7 @@ func (t thelper) buildTestCheckFuncOpts(pass *analysis.Pass, ctxType types.Type)
 		fnHelper:        tHelper,
 		subRun:          tRun,
 		hpType:          tType,
-		subTestFuncType: types.NewSignature(nil, types.NewTuple(tVar), nil, false),
+		subTestFuncType: types.NewSignatureType(nil, nil, nil, types.NewTuple(tVar), nil, false),
 		ctxType:         ctxType,
 		checkBegin:      t.enabledChecks.Enabled(checkTBegin),
 		checkFirst:      t.enabledChecks.Enabled(checkTFirst),
@@ -315,7 +317,7 @@ func (t thelper) buildBenchmarkCheckFuncOpts(pass *analysis.Pass, ctxType types.
 		fnHelper:        bHelper,
 		subRun:          bRun,
 		hpType:          types.NewPointer(bObj.Type()),
-		subTestFuncType: types.NewSignature(nil, types.NewTuple(bVar), nil, false),
+		subTestFuncType: types.NewSignatureType(nil, nil, nil, types.NewTuple(bVar), nil, false),
 		ctxType:         ctxType,
 		checkBegin:      t.enabledChecks.Enabled(checkBBegin),
 		checkFirst:      t.enabledChecks.Enabled(checkBFirst),
