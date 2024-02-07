@@ -16,7 +16,8 @@ import (
 )
 
 const (
-	doc       = "thelper detects tests helpers which is not start with t.Helper() method."
+	doc = "thelper detects tests helpers which is not start with t.Helper() method."
+	//nolint: goconst
 	checksDoc = `coma separated list of enabled checks
 
 Available checks
@@ -94,20 +95,21 @@ type thelper struct {
 // NewAnalyzer return a new thelper analyzer.
 // thelper analyzes Go test codes how they use t.Helper() method.
 func NewAnalyzer() *analysis.Analyzer {
-	thelper := thelper{}
-	thelper.enabledChecks = enabledChecksValue{
-		checkTBegin:  struct{}{},
-		checkTFirst:  struct{}{},
-		checkTName:   struct{}{},
-		checkFBegin:  struct{}{},
-		checkFFirst:  struct{}{},
-		checkFName:   struct{}{},
-		checkBBegin:  struct{}{},
-		checkBFirst:  struct{}{},
-		checkBName:   struct{}{},
-		checkTBBegin: struct{}{},
-		checkTBFirst: struct{}{},
-		checkTBName:  struct{}{},
+	thelper := thelper{
+		enabledChecks: enabledChecksValue{
+			checkTBegin:  struct{}{},
+			checkTFirst:  struct{}{},
+			checkTName:   struct{}{},
+			checkFBegin:  struct{}{},
+			checkFFirst:  struct{}{},
+			checkFName:   struct{}{},
+			checkBBegin:  struct{}{},
+			checkBFirst:  struct{}{},
+			checkBName:   struct{}{},
+			checkTBBegin: struct{}{},
+			checkTBFirst: struct{}{},
+			checkTBName:  struct{}{},
+		},
 	}
 
 	a := &analysis.Analyzer{
@@ -254,7 +256,7 @@ func (t thelper) buildTestCheckFuncOpts(pass *analysis.Pass, ctxType types.Type)
 		fnHelper:        tHelper,
 		subRun:          tRun,
 		hpType:          tType,
-		subTestFuncType: types.NewSignature(nil, types.NewTuple(tVar), nil, false),
+		subTestFuncType: types.NewSignatureType(nil, nil, nil, types.NewTuple(tVar), nil, false),
 		ctxType:         ctxType,
 		checkBegin:      t.enabledChecks.Enabled(checkTBegin),
 		checkFirst:      t.enabledChecks.Enabled(checkTFirst),
@@ -279,15 +281,16 @@ func (t thelper) buildFuzzCheckFuncOpts(pass *analysis.Pass, ctxType types.Type)
 	}
 
 	return checkFuncOpts{
-		skipPrefix: "Fuzz",
-		varName:    "f",
-		fnHelper:   fHelper,
-		subRun:     tFuzz,
-		hpType:     types.NewPointer(fObj.Type()),
-		ctxType:    ctxType,
-		checkBegin: t.enabledChecks.Enabled(checkFBegin),
-		checkFirst: t.enabledChecks.Enabled(checkFFirst),
-		checkName:  t.enabledChecks.Enabled(checkFName),
+		skipPrefix:      "Fuzz",
+		varName:         "f",
+		fnHelper:        fHelper,
+		subRun:          tFuzz,
+		subTestFuncType: nil,
+		hpType:          types.NewPointer(fObj.Type()),
+		ctxType:         ctxType,
+		checkBegin:      t.enabledChecks.Enabled(checkFBegin),
+		checkFirst:      t.enabledChecks.Enabled(checkFFirst),
+		checkName:       t.enabledChecks.Enabled(checkFName),
 	}, true
 }
 
@@ -315,7 +318,7 @@ func (t thelper) buildBenchmarkCheckFuncOpts(pass *analysis.Pass, ctxType types.
 		fnHelper:        bHelper,
 		subRun:          bRun,
 		hpType:          types.NewPointer(bObj.Type()),
-		subTestFuncType: types.NewSignature(nil, types.NewTuple(bVar), nil, false),
+		subTestFuncType: types.NewSignatureType(nil, nil, nil, types.NewTuple(bVar), nil, false),
 		ctxType:         ctxType,
 		checkBegin:      t.enabledChecks.Enabled(checkBBegin),
 		checkFirst:      t.enabledChecks.Enabled(checkBFirst),
@@ -335,14 +338,16 @@ func (t thelper) buildTBCheckFuncOpts(pass *analysis.Pass, ctxType types.Type) (
 	}
 
 	return checkFuncOpts{
-		skipPrefix: "",
-		varName:    "tb",
-		fnHelper:   tbHelper,
-		hpType:     tbObj.Type(),
-		ctxType:    ctxType,
-		checkBegin: t.enabledChecks.Enabled(checkTBBegin),
-		checkFirst: t.enabledChecks.Enabled(checkTBFirst),
-		checkName:  t.enabledChecks.Enabled(checkTBName),
+		skipPrefix:      "",
+		varName:         "tb",
+		fnHelper:        tbHelper,
+		subRun:          nil,
+		subTestFuncType: nil,
+		hpType:          tbObj.Type(),
+		ctxType:         ctxType,
+		checkBegin:      t.enabledChecks.Enabled(checkTBBegin),
+		checkFirst:      t.enabledChecks.Enabled(checkTBFirst),
+		checkName:       t.enabledChecks.Enabled(checkTBName),
 	}, true
 }
 

@@ -12,6 +12,16 @@ linters-settings:
     locale: US
   gci:
     local-prefixes: github.com/kulti/thelper
+  depguard:
+    rules:
+      all:
+        files:
+          - $all
+        allow:
+          - $gostd
+          # Approved orgs.
+          - "github.com/gostaticanalysis/analysisutil"
+          - "github.com/kulti/thelper/pkg/analyzer"
 
 linters:
   enable-all: true
@@ -34,3 +44,9 @@ linters:
   - golint
   - cyclop
   - nilnil
+  - deadcode
+  - varcheck
+  - ifshort
+  - nosnakecase
+  - structcheck
+  - exhaustruct
