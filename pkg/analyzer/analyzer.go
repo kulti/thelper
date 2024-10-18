@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	doc = "thelper detects tests helpers which is not start with t.Helper() method."
+	doc = "thelper detects tests helpers which do not start with the t.Helper() method."
 
 	//nolint:goconst // Just a repeated coma, cannot be written better.
 	checksDoc = `coma separated list of enabled checks
