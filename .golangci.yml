@@ -1,46 +1,40 @@
+version: "2"
+
 run:
   skip-dirs:
     - pkg/analyzer/testdata
 
-linters-settings:
-  golint:
-    min-confidence: 0
-  goconst:
-    min-len: 2
-    min-occurrences: 3
-  misspell:
-    locale: US
-  gci:
-    local-prefixes: github.com/kulti/thelper
-  nolintlint:
-    require-explanation: true
-    require-specific: true
-
 linters:
-  enable-all: true
+  default: all
   disable:
     - cyclop
-    - deadcode # deprecated
     - depguard # Not looks useful for this project
     - dupl
-    - exhaustivestruct # deprecated
     - exhaustruct # Make use of zero-values and partial initialization.
     - gocognit
-    - goerr113
-    - golint
-    - gomnd
-    - ifshort # deprecated
-    - interfacer
+    - err113
+    - mnd
     - lll
-    - maligned
     - nestif
     - nilnil
     - nlreturn
-    - nosnakecase # deprecated
     - paralleltest
     - prealloc
-    - scopelint
-    - structcheck # deprecated
-    - varcheck # deprecated
     - varnamelen
-    - wsl
+    - wsl_v5
+  settings:
+    goconst:
+      min-len: 2
+      min-occurrences: 3
+    misspell:
+      locale: US
+    nolintlint:
+      require-explanation: true
+      require-specific: true
+
+formatters:
+  enable:
+    - gci
+  settings:
+    gci:
+      local-prefixes: github.com/kulti/thelper
