@@ -1,3 +1,4 @@
+// Package analyzer implements the thelper linter logic.
 package analyzer
 
 import (
@@ -18,7 +19,6 @@ import (
 const (
 	doc = "thelper detects tests helpers which is not start with t.Helper() method."
 
-	//nolint:goconst // Just a repeated coma, cannot be written better.
 	checksDoc = `coma separated list of enabled checks
 
 Available checks
@@ -47,7 +47,9 @@ func (m enabledChecksValue) String() string {
 	for s := range m {
 		ss = append(ss, s)
 	}
+
 	sort.Strings(ss)
+
 	return strings.Join(ss, ",")
 }
 
@@ -60,6 +62,7 @@ func (m enabledChecksValue) Set(s string) error {
 	for k := range m {
 		delete(m, k)
 	}
+
 	for _, v := range ss {
 		switch v {
 		case checkTBegin, checkTFirst, checkTName,
@@ -71,6 +74,7 @@ func (m enabledChecksValue) Set(s string) error {
 			return fmt.Errorf("unknown check name %q (see help for full list)", v)
 		}
 	}
+
 	return nil
 }
 
@@ -127,6 +131,7 @@ func NewAnalyzer() *analysis.Analyzer {
 	return a
 }
 
+//nolint:funlen // The function is easier to grok this way.
 func (t thelper) run(pass *analysis.Pass) (interface{}, error) {
 	tCheckOpts, fCheckOpts, bCheckOpts, tbCheckOpts, ok := t.buildCheckFuncOpts(pass)
 	if !ok {
@@ -139,6 +144,7 @@ func (t thelper) run(pass *analysis.Pass) (interface{}, error) {
 	}
 
 	var reports reports
+
 	nodeFilter := []ast.Node{
 		(*ast.FuncDecl)(nil),
 		(*ast.FuncLit)(nil),
@@ -146,6 +152,7 @@ func (t thelper) run(pass *analysis.Pass) (interface{}, error) {
 	}
 	inspect.Preorder(nodeFilter, func(node ast.Node) {
 		var fd funcDecl
+
 		switch n := node.(type) {
 		case *ast.FuncLit:
 			fd.Pos = n.Pos()
@@ -159,9 +166,11 @@ func (t thelper) run(pass *analysis.Pass) (interface{}, error) {
 			fd.Name = n.Name
 		case *ast.CallExpr:
 			runSubtestExprs := extractSubtestExp(pass, n, tCheckOpts.subRun, tCheckOpts.subTestFuncType)
+
 			if len(runSubtestExprs) == 0 {
 				runSubtestExprs = extractSubtestExp(pass, n, bCheckOpts.subRun, bCheckOpts.subTestFuncType)
 			}
+
 			if len(runSubtestExprs) == 0 {
 				runSubtestExprs = extractSubtestFuzzExp(pass, n, fCheckOpts.subRun)
 			}
@@ -173,6 +182,7 @@ func (t thelper) run(pass *analysis.Pass) (interface{}, error) {
 			} else {
 				reports.NoFilter(funcDefPosition(pass, n.Fun))
 			}
+
 			return
 		default:
 			return
@@ -204,6 +214,7 @@ type checkFuncOpts struct {
 
 func (t thelper) buildCheckFuncOpts(pass *analysis.Pass) (checkFuncOpts, checkFuncOpts, checkFuncOpts, checkFuncOpts, bool) {
 	var ctxType types.Type
+
 	ctxObj := analysisutil.ObjectOf(pass, "context", "Context")
 	if ctxObj != nil {
 		ctxType = ctxObj.Type()
@@ -250,6 +261,7 @@ func (t thelper) buildTestCheckFuncOpts(pass *analysis.Pass, ctxType types.Type)
 
 	tType := types.NewPointer(tObj.Type())
 	tVar := types.NewVar(token.NoPos, nil, "t", tType)
+
 	return checkFuncOpts{
 		skipPrefix:      "Test",
 		varName:         "t",
@@ -311,6 +323,7 @@ func (t thelper) buildBenchmarkCheckFuncOpts(pass *analysis.Pass, ctxType types.
 
 	bType := types.NewPointer(bObj.Type())
 	bVar := types.NewVar(token.NoPos, nil, "b", bType)
+
 	return checkFuncOpts{
 		skipPrefix:      "Benchmark",
 		varName:         "b",
@@ -372,6 +385,7 @@ func checkFunc(pass *analysis.Pass, reports *reports, funcDecl funcDecl, opts ch
 	if opts.checkFirst {
 		if pos != 0 {
 			checkFirstPassed := false
+
 			if pos == 1 && opts.ctxType != nil {
 				_, pos, ok := searchFuncParam(pass, funcDecl, opts.ctxType)
 				checkFirstPassed = ok && (pos == 0)
@@ -406,6 +420,7 @@ func searchFuncParam(pass *analysis.Pass, f funcDecl, p types.Type) (*ast.Field,
 			return f, i, true
 		}
 	}
+
 	return nil, 0, false
 }
 
@@ -484,6 +499,7 @@ func unwrapTestingFunctionBuilding(pass *analysis.Pass, expr ast.Expr, testFuncT
 	}
 
 	var funcDecl funcDecl
+
 	switch f := callExpr.Fun.(type) {
 	case *ast.FuncLit:
 		funcDecl.Body = f.Body
@@ -514,6 +530,7 @@ func unwrapTestingFunctionBuilding(pass *analysis.Pass, expr ast.Expr, testFuncT
 	}
 
 	var funcs []ast.Expr
+
 	ast.Inspect(funcDecl.Body, func(n ast.Node) bool {
 		if n == nil {
 			return false
@@ -524,6 +541,7 @@ func unwrapTestingFunctionBuilding(pass *analysis.Pass, expr ast.Expr, testFuncT
 				funcs = append(funcs, retStmt.Results[0])
 			}
 		}
+
 		return true
 	})
 
@@ -544,6 +562,7 @@ func funcDefPosition(pass *analysis.Pass, e ast.Expr) token.Pos {
 		if !ok {
 			return token.NoPos
 		}
+
 		funIdent = selExpr.Sel
 	}
 
