@@ -1,3 +1,4 @@
+// Package main generates test files for the thelper linter.
 package main
 
 import (
@@ -89,7 +90,8 @@ func ff() {}
 func main() {
 	opts := parseOptions()
 
-	if err := os.MkdirAll(opts.path, 0o755); err != nil {
+	err := os.MkdirAll(opts.path, 0o750)
+	if err != nil {
 		log.Fatalf("failed to create path %q: %v", opts.path, err)
 	}
 
@@ -99,20 +101,25 @@ func main() {
 	}
 
 	filePath := filepath.Join(opts.path, opts.name+".go")
-	f, err := os.Create(filePath)
+
+	f, err := os.Create(filepath.Clean(filePath))
 	if err != nil {
 		log.Fatalf("failed to create file %q: %v", filePath, err)
 	}
-	if err := os.MkdirAll(opts.path, 0o600); err != nil {
+
+	err = os.MkdirAll(opts.path, 0o600)
+	if err != nil {
 		log.Fatalf("failed to create directory %q: %v", opts.path, err)
 	}
 
 	testingStr := "*testing"
 	testingComment := `\\*testing`
+
 	if opts.isInterface {
 		testingStr = "testing"
 		testingComment = "testing"
 	}
+
 	data := struct {
 		Receivers      []string
 		Name           string
@@ -128,7 +135,9 @@ func main() {
 		Testing:        testingStr,
 		TestingComment: testingComment,
 	}
-	if err := tmpl.Execute(f, &data); err != nil {
+
+	err = tmpl.Execute(f, &data)
+	if err != nil {
 		log.Fatalf("failed to execute template: %v", err)
 	}
 }
@@ -140,6 +149,7 @@ type opts struct {
 
 func parseOptions() opts {
 	var opts opts
+
 	flag.StringVar(&opts.name, "name", "", "")
 	flag.StringVar(&opts.path, "path", "", "")
 	flag.StringVar(&opts.check, "check", "", "")
