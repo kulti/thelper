@@ -4,8 +4,9 @@ import (
 	"log"
 	"testing"
 
-	"github.com/kulti/thelper/pkg/analyzer"
 	"golang.org/x/tools/go/analysis/analysistest"
+
+	"github.com/kulti/thelper/pkg/analyzer"
 )
 
 //go:generate go run github.com/kulti/thelper/scripts/generator --name t --path testdata/src

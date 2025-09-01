@@ -2,8 +2,9 @@
 package main
 
 import (
-	"github.com/kulti/thelper/pkg/analyzer"
 	"golang.org/x/tools/go/analysis/singlechecker"
+
+	"github.com/kulti/thelper/pkg/analyzer"
 )
 
 func main() {

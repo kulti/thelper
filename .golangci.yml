@@ -1,11 +1,9 @@
-version: "2"
-
-run:
-  skip-dirs:
+issues:
+  exclude-dirs:
     - pkg/analyzer/testdata
 
 linters:
-  default: all
+  enable-all: true
   disable:
     - cyclop
     - depguard # Not looks useful for this project
@@ -22,25 +20,19 @@ linters:
     - prealloc
     - varnamelen
     - wsl # Deprecated, replaced by wsl_v5
-  enable:
-    - wsl_v5
-  settings:
-    goconst:
-      min-len: 2
-      min-occurrences: 3
-    misspell:
-      locale: US
-    nolintlint:
-      require-explanation: true
-      require-specific: true
-    wsl_v5:
-      allow-first-in-block: true
-      allow-whole-block: false
-      branch-max-lines: 2
+    - tenv # Deprecated, replaced by usetesting
 
-formatters:
-  enable:
-    - gci
-  settings:
-    gci:
-      local-prefixes: github.com/kulti/thelper
+linters-settings:
+  goconst:
+    min-len: 2
+    min-occurrences: 3
+  misspell:
+    locale: US
+  nolintlint:
+    require-explanation: true
+    require-specific: true
+  gci:
+    sections:
+      - standard
+      - default
+      - prefix(github.com/kulti/thelper)
