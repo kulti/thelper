@@ -1,14 +1,12 @@
-issues:
-  exclude-dirs:
-    - pkg/analyzer/testdata
+version: "2"
 
 linters:
-  enable-all: true
+  default: all
   disable:
     - cyclop
-    - depguard # Not looks useful for this project
+    - depguard
     - dupl
-    - exhaustruct # Make use of zero-values and partial initialization.
+    - exhaustruct
     - gocognit
     - err113
     - mnd
@@ -19,20 +17,13 @@ linters:
     - paralleltest
     - prealloc
     - varnamelen
-    - wsl # Deprecated, replaced by wsl_v5
-    - tenv # Deprecated, replaced by usetesting
-
-linters-settings:
-  goconst:
-    min-len: 2
-    min-occurrences: 3
-  misspell:
-    locale: US
-  nolintlint:
-    require-explanation: true
-    require-specific: true
-  gci:
-    sections:
-      - standard
-      - default
-      - prefix(github.com/kulti/thelper)
+    - wsl
+  settings:
+    goconst:
+      min-len: 2
+      min-occurrences: 3
+    misspell:
+      locale: US
+    nolintlint:
+      require-explanation: true
+      require-specific: true
