@@ -175,6 +175,10 @@ func (t thelper) run(pass *analysis.Pass) (interface{}, error) {
 				runSubtestExprs = extractSubtestFuzzExp(pass, n, fCheckOpts.subRun)
 			}
 
+			if len(runSubtestExprs) == 0 {
+				runSubtestExprs = extractSynctestExp(pass, n, tCheckOpts.subTestFuncType)
+			}
+
 			if len(runSubtestExprs) > 0 {
 				for _, expr := range runSubtestExprs {
 					reports.Filter(funcDefPosition(pass, expr))
@@ -488,6 +492,46 @@ func extractSubtestFuzzExp(
 	}
 
 	return []ast.Expr{e.Args[0]}
+}
+
+// extractSynctestExp analyzes that call expression 'e' is synctest.Test
+// and returns the test function.
+func extractSynctestExp(
+	pass *analysis.Pass, e *ast.CallExpr, testFuncType types.Type,
+) []ast.Expr {
+	// Check if this is a call to synctest.Test
+	selExpr, ok := e.Fun.(*ast.SelectorExpr)
+	if !ok {
+		return nil
+	}
+
+	// Check if the selector is "Test"
+	if selExpr.Sel.Name != "Test" {
+		return nil
+	}
+
+	// Check if the package is synctest by looking at the identifier
+	ident, ok := selExpr.X.(*ast.Ident)
+	if !ok {
+		return nil
+	}
+
+	// Simple check: if the identifier is "synctest", assume it's the right package
+	// This is a heuristic approach similar to how other linters work
+	if ident.Name != "synctest" {
+		return nil
+	}
+
+	// synctest.Test takes 2 arguments: t *testing.T, f func(*testing.T)
+	if len(e.Args) != 2 {
+		return nil
+	}
+
+	if funcs := unwrapTestingFunctionBuilding(pass, e.Args[1], testFuncType); funcs != nil {
+		return funcs
+	}
+
+	return []ast.Expr{e.Args[1]}
 }
 
 // unwrapTestingFunctionConstruction checks that expresion is build testing functions
