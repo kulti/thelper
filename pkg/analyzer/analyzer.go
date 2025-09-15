@@ -516,9 +516,7 @@ func extractSynctestExp(
 		return nil
 	}
 
-	// Simple check: if the identifier is "synctest", assume it's the right package
-	// This is a heuristic approach similar to how other linters work
-	if ident.Name != "synctest" {
+	if !isIdentPackageName(pass, ident, "testing/synctest") {
 		return nil
 	}
 
@@ -637,6 +635,21 @@ func isExprHasType(pass *analysis.Pass, expr ast.Expr, expType types.Type) bool 
 	}
 
 	return types.Identical(typeInfo.Type, expType)
+}
+
+// isIdentPackageName returns true if ident refers to the specified package.
+func isIdentPackageName(pass *analysis.Pass, ident *ast.Ident, pkgName string) bool {
+	obj := pass.TypesInfo.Uses[ident]
+	if obj == nil {
+		return false
+	}
+
+	pkgObj, ok := obj.(*types.PkgName)
+	if !ok {
+		return false
+	}
+
+	return pkgObj.Imported().Path() == pkgName
 }
 
 // findSelectorDeclaration returns function declaration called by selector expression.
