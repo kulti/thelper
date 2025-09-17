@@ -10,7 +10,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/gostaticanalysis/analysisutil"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/passes/inspect"
 	"golang.org/x/tools/go/ast/inspector"
@@ -219,7 +218,7 @@ type checkFuncOpts struct {
 func (t thelper) buildCheckFuncOpts(pass *analysis.Pass) (checkFuncOpts, checkFuncOpts, checkFuncOpts, checkFuncOpts, bool) {
 	var ctxType types.Type
 
-	ctxObj := analysisutil.ObjectOf(pass, "context", "Context")
+	ctxObj := findTypeObject(pass, "context.Context")
 	if ctxObj != nil {
 		ctxType = ctxObj.Type()
 	}
@@ -248,7 +247,7 @@ func (t thelper) buildCheckFuncOpts(pass *analysis.Pass) (checkFuncOpts, checkFu
 }
 
 func (t thelper) buildTestCheckFuncOpts(pass *analysis.Pass, ctxType types.Type) (checkFuncOpts, bool) {
-	tObj := analysisutil.ObjectOf(pass, "testing", "T")
+	tObj := findTypeObject(pass, "testing.T")
 	if tObj == nil {
 		return checkFuncOpts{}, false
 	}
@@ -281,7 +280,7 @@ func (t thelper) buildTestCheckFuncOpts(pass *analysis.Pass, ctxType types.Type)
 }
 
 func (t thelper) buildFuzzCheckFuncOpts(pass *analysis.Pass, ctxType types.Type) (checkFuncOpts, bool) {
-	fObj := analysisutil.ObjectOf(pass, "testing", "F")
+	fObj := findTypeObject(pass, "testing.F")
 	if fObj == nil {
 		return checkFuncOpts{}, true // fuzzing supports since go1.18, it's ok, that testig.F is missed.
 	}
@@ -310,7 +309,7 @@ func (t thelper) buildFuzzCheckFuncOpts(pass *analysis.Pass, ctxType types.Type)
 }
 
 func (t thelper) buildBenchmarkCheckFuncOpts(pass *analysis.Pass, ctxType types.Type) (checkFuncOpts, bool) {
-	bObj := analysisutil.ObjectOf(pass, "testing", "B")
+	bObj := findTypeObject(pass, "testing.B")
 	if bObj == nil {
 		return checkFuncOpts{}, false
 	}
@@ -343,7 +342,7 @@ func (t thelper) buildBenchmarkCheckFuncOpts(pass *analysis.Pass, ctxType types.
 }
 
 func (t thelper) buildTBCheckFuncOpts(pass *analysis.Pass, ctxType types.Type) (checkFuncOpts, bool) {
-	tbObj := analysisutil.ObjectOf(pass, "testing", "TB")
+	tbObj := findTypeObject(pass, "testing.TB")
 	if tbObj == nil {
 		return checkFuncOpts{}, false
 	}
@@ -710,6 +709,25 @@ func findFunctionDeclaration(pass *analysis.Pass, ident *ast.Ident) *ast.FuncDec
 			if funcDecl.Name.Pos() == obj.Pos() {
 				return funcDecl
 			}
+		}
+	}
+
+	return nil
+}
+
+func findTypeObject(pass *analysis.Pass, typeName string) types.Object {
+	parts := strings.Split(typeName, ".")
+	pkgName := parts[0]
+	typeName = parts[1]
+
+	for _, pkg := range pass.Pkg.Imports() {
+		if pkg.Name() != pkgName {
+			continue
+		}
+
+		obj := pkg.Scope().Lookup(typeName)
+		if obj != nil {
+			return obj
 		}
 	}
 
