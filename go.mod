@@ -1,6 +1,6 @@
 module github.com/kulti/thelper
 
-go 1.25
+go 1.24
 
 require (
 	github.com/gostaticanalysis/analysisutil v0.4.1
